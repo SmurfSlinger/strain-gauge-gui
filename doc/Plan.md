@@ -33,8 +33,17 @@
 
 ---
 
-### 1) Design buttons.
-*
+### 1) Design buttons, inputs, and other controls.
+* File, Edit, View, Project, Operate, Tools, Window, Help (baseline/reference)
+* Record button (begin recording data)
+  * Reset button to reset graph only (previous data is still saved)
+  * Stop button to finish the test
+* Plot Decision (e.g. resistance vs time, etc)
+* Measurements
+  * Voltage (V)
+  * Current (A)
+  * Resistance (Ohms)
+* Real-time load/strain data measurements
 ---
 ### 2) Display data.
 *
