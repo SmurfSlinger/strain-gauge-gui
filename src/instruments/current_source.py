@@ -1,20 +1,22 @@
+from abc import abstractmethod, ABC
+
 from src.instruments.base_instrument import BaseInstrument
 
-class Source_6221(BaseInstrument):      # Current Source
+class CurrentSource(ABC):      # Current Source
     def __init__(self):
         BaseInstrument.__init__(self)
         self.current = None
         self.output_state = False
 
+    @abstractmethod
     def set_current(self, current):
-        self.current = current
+        pass
 
+    @abstractmethod
     def set_output(self, state: bool):
-        self.output_state = state
+        pass
 
+    @abstractmethod
     def read(self):
-        if self.output_state:
-            return self.current
-        else:
-            return None
+        pass
 

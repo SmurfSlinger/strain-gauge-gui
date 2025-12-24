@@ -1,6 +1,8 @@
 
-| Date      | Time    | Description                                                                                                                                                                                                     |
-|-----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 11/24/2025 | 2 hours | Installed PyCharm, Git, GitHub Desktop, Teamviewer, created Git repository for the project. Began constructing the project plan.                                                                                |
-| 12/1/2025 | 2 hours | Analyzed Appendix B from given thesis paper, installed python, installed pyvisa, saw a machine on serial port and attempted communication remotely, compiled a list of all necessary commands for each machine. |  
- | 12/17/2025 | hours | Set up project file structure, implemented machine base class, wrote switch_3700 mock class and began testing mock setup. Updated documentation with start of abstract description of project design.           |
+| Date      | Time            | Description                                                                                                                                                                                                     |
+|-----------|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 11/24/2025 | 2 hours         | Installed PyCharm, Git, GitHub Desktop, Teamviewer, created Git repository for the project. Began constructing the project plan.                                                                                |
+| 12/1/2025 | 2 hours         | Analyzed Appendix B from given thesis paper, installed python, installed pyvisa, saw a machine on serial port and attempted communication remotely, compiled a list of all necessary commands for each machine. |  
+ | 12/17/2025 | 2.5 hours       | Set up project file structure, implemented machine base class, wrote switch_3700 mock class and began testing mock setup. Updated documentation with start of abstract description of project design.           |
+ | 12/22/2025 | .25 hours       | Added more explanations/comments to source code.                                                                                                                                                                |
+ | 12/23/2025 | (20 mins) hours | Finished adding meaningful comments to current source code. |

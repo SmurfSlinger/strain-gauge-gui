@@ -1,19 +1,21 @@
+from abc import abstractmethod, ABC
+
 from src.instruments.base_instrument import BaseInstrument
 
-class Source6487(BaseInstrument):       # Voltage Source
+class VoltageSource(ABC):       # Voltage Source
     def __init__(self):
         BaseInstrument.__init__(self)
         self.voltage = None
         self.output_state = False
 
+    @abstractmethod
     def set_voltage(self, voltage):
-        self.voltage = voltage
+        pass
 
+    @abstractmethod
     def set_output(self, state: bool):
-        self.output_state = state
+        pass
 
+    @abstractmethod
     def read(self):
-        if self.output_state:
-            return self.voltage
-        else:
-            return None
+        pass

@@ -1,0 +1,7 @@
+
+
+Integrate AI functionality somehow
+
+Write thorough documentation and source code notes
+
+Backend/frontend integration
