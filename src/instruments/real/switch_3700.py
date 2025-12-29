@@ -1,4 +1,4 @@
-from src.instruments.switch_multimeter import Switch3700
+from src.instruments.abstract.switch_matrix import Switch3700
 
 class MockSwitch3700(Switch3700):
     def __init__(self):

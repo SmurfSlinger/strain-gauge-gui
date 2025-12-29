@@ -22,3 +22,6 @@ class BaseInstrument:
 
     def query(self, command: str) -> str:
         raise NotImplementedError()
+
+    def reset(self):
+        raise NotImplementedError

@@ -1,4 +1,4 @@
-from src.instruments.base_instrument import BaseInstrument
+from src.instruments.abstract.base_instrument import BaseInstrument
 
 class MockSource6221(BaseInstrument):      # Current Source
     def __init__(self):                         # This runs when this class is called/made into an object. Currently, it runs the

@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 
-from src.instruments.base_instrument import BaseInstrument
+from src.instruments.abstract.base_instrument import BaseInstrument
 
 class CurrentSource(ABC):      # Current Source
     def __init__(self):
@@ -8,15 +8,15 @@ class CurrentSource(ABC):      # Current Source
         self.current = None
         self.output_state = False
 
-    @abstractmethod
+    @abstractmethod             # This must be defined in child classes
     def set_current(self, current):
         pass
 
-    @abstractmethod
+    @abstractmethod             # This must be defined in child classes
     def set_output(self, state: bool):
         pass
 
-    @abstractmethod
+    @abstractmethod             # This must be defined in child classes
     def read(self):
         pass
 

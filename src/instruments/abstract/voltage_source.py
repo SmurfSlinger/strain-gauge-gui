@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 
-from src.instruments.base_instrument import BaseInstrument
+from src.instruments.abstract.base_instrument import BaseInstrument
 
 class VoltageSource(ABC):       # Voltage Source
     def __init__(self):
@@ -8,14 +8,14 @@ class VoltageSource(ABC):       # Voltage Source
         self.voltage = None
         self.output_state = False
 
-    @abstractmethod
+    @abstractmethod             # This must be defined in child classes
     def set_voltage(self, voltage):
         pass
 
-    @abstractmethod
+    @abstractmethod             # This must be defined in child classes
     def set_output(self, state: bool):
         pass
 
-    @abstractmethod
+    @abstractmethod             # This must be defined in child classes
     def read(self):
         pass
