@@ -2,7 +2,7 @@ from abc import abstractmethod, ABC
 
 from src.instruments.abstract.base_instrument import BaseInstrument
 
-class CurrentSource(ABC):      # Current Source
+class CurrentSource(ABC, BaseInstrument):      # Current Source
     def __init__(self):
         BaseInstrument.__init__(self)
         self.current = None

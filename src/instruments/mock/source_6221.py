@@ -11,9 +11,3 @@ class MockSource6221(BaseInstrument):      # Current Source
 
     def set_output(self, state: bool):     # Sets the current output state to on or off (use True/False)
         self.output_state = state
-
-    def read(self):                        # If the output state is 'on' or True, it returns the current 'current' value
-        if self.output_state:
-            return self.current
-        else:
-            return None

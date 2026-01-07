@@ -8,3 +8,4 @@
  | 12/23/2025 | .25 hours | Finished adding meaningful comments to current source code.                                                                                                                                                     |
  | 12/27/2025 | .5 hour | Consolidated directories into 3 sections in src/. Began defining the specific instrument classes.                                                                                                               |
   | 12/29/2025 | 1 hour | Added switching experiment driver functionality, more tests to the experiment controller.                                                                                                                       |
+  | 1/3/2026 | 1 hour | Completed further USU trainings, researched Protocols and began implementing them for typing flexibility.

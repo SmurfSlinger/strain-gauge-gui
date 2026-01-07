@@ -1,7 +1,8 @@
 from abc import abstractmethod, ABC
+from src.instruments.abstract.base_instrument import BaseInstrument
 
 
-class SwitchMatrix(ABC):
+class SwitchMatrix(ABC, BaseInstrument):
     def __init__(self, controller):
         self.controller = controller
 

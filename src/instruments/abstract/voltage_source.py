@@ -1,8 +1,7 @@
 from abc import abstractmethod, ABC
-
 from src.instruments.abstract.base_instrument import BaseInstrument
 
-class VoltageSource(ABC):       # Voltage Source
+class VoltageSource(ABC, BaseInstrument):       # Voltage Source
     def __init__(self):
         BaseInstrument.__init__(self)
         self.voltage = None
