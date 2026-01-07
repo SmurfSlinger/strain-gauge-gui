@@ -4,6 +4,7 @@ from src.controller.resistance_measurement_mode import ResistanceMeasurementMode
 from src.controller.resistance_measurement_mode import ResistanceMeasurementMode
 from src.controller.resistance_result import ResistanceResult
 
+
 class ExperimentController:
     def __init__(self, switch, current_source, voltage_source):
         self.switch = switch
