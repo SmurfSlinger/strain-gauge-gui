@@ -1,6 +1,8 @@
-from src.instruments.abstract.switch_matrix import Switch3700
+from abc import ABC
 
-class MockSwitch3700(Switch3700):
+from src.instruments.abstract.switch_matrix import SwitchMatrix
+
+class Switch3700(SwitchMatrix, ABC):
     def __init__(self):
         super().__init__("Mock3700")
         self.closed_channels = set()

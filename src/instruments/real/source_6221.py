@@ -1,6 +1,6 @@
 from src.instruments.abstract.base_instrument import BaseInstrument
 
-class MockSource6221(BaseInstrument):      # Current Source
+class Source6221(BaseInstrument):      # Current Source
     def __init__(self):                         # This runs when this class is called/made into an object. Currently, it runs the
         super().__init__("Current Source Keithley 6221")      # initializer of the base instrument class, and sets the current to nothing and the output state to off.
         self.current = None

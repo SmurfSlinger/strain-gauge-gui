@@ -1,6 +1,6 @@
 from src.instruments.abstract.base_instrument import BaseInstrument
 
-class MockSource6487(BaseInstrument):       # Voltage Source
+class Source6487(BaseInstrument):       # Voltage Source
     def __init__(self):                         # This runs when this class is called/made into an object. Currently, it runs the
         super().__init__("Voltage Source")      # parent initializer, sets the current voltage to nothing, and sets the output state to off.
         self.voltage = None

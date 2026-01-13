@@ -1,0 +1,18 @@
+{
+  "mode": "mock",
+  "sample_interval_ms": 250,
+
+  "switch": { "resource_name": "GPIB0::12::INSTR" },
+  "current_source": { "resource_name": "GPIB0::24::INSTR" },
+  "voltmeter": { "resource_name": "GPIB0::26::INSTR" },
+
+  "default_experiment": {
+    "force_channel_pos": 101,
+    "force_channel_neg": 102,
+    "current_amps": 0.000001
+  },
+
+  "paths": {
+    "default_working_directory": ""
+  }
+}
