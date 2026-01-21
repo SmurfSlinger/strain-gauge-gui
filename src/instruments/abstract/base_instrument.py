@@ -30,7 +30,7 @@ class BaseInstrument:
         if self.connected:
             return self.idn or ""
 
-        self.rm = pyvisa.ResourceManager()
+        self.rm = pyvisa.ResourceManager('@ni')
         self.inst = self.rm.open_resource(self.cfg.resource_name)
 
         # Conservative default timeout (ms)

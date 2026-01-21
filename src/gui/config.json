@@ -1,5 +1,5 @@
 {
-  "mode": "mock",
+  "mode": "real",
   "sample_interval_ms": 250,
 
   "switch": { "resource_name": "GPIB0::12::INSTR" },
