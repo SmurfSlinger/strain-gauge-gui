@@ -9,7 +9,7 @@ import pyvisa
 
 
 class BaseInstrument:
-    def __init__(self, resource_name: str, name: str):
+    def __init__(self, resource_name: str, name: str = "None"):
         self.resource_name = resource_name
         self.name = name
         self.rm = None

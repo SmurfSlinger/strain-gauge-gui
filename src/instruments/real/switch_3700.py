@@ -20,3 +20,49 @@ class Switch3700(SwitchMatrix, ABC):
 
     def query(self, command: str) -> str:
         return "0"
+
+    def open_all(self):
+        """
+        Open all channels on the switch matrix.
+        """
+        if not self.connected:
+            return
+
+        # Keithley SCPI: open all channels
+        self.inst.write("ROUTe:OPEN:ALL")
+        self.closed_channels.clear()
+
+    def close_channel(self, channel: int):
+        """
+        Close a single channel.
+        """
+        if not self.connected:
+            return
+
+        # Keithley SCPI: close specific channel
+        self.inst.write(f"ROUTe:CLOSe (@{channel})")
+        self.closed_channels.add(channel)
+
+    def open_channel(self, channel: int):
+        """
+        Open a single channel.
+        """
+        if not self.connected:
+            return
+
+        self.inst.write(f"ROUTe:OPEN (@{channel})")
+        self.closed_channels.discard(channel)
+
+        # -------------------------
+        # Optional helpers (safe)
+        # -------------------------
+
+    def reset(self):
+        """
+        Reset the switch to power-on defaults.
+        """
+        if not self.connected:
+            return
+
+        self.inst.write("*RST")
+        self.closed_channels.clear()
