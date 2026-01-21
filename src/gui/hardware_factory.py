@@ -1,38 +1,50 @@
-from __future__ import annotations
-
-
-# Controller (your existing file)
 from src.controller.experiment_controller import ExperimentController
 
+from src.instruments.mock.switch_3700 import MockSwitch3700
+from src.instruments.mock.source_6221 import MockSource6221
+from src.instruments.mock.source_6487 import MockSource6487
 
+from src.instruments.keithley.keithley_3700 import Keithley3700
+from src.instruments.keithley.keithley_6221 import Keithley6221
+from src.instruments.keithley.keithley_6487 import Keithley6487
 
 
 def build_controller(cfg):
-    if cfg.mode == "mock":
-        from src.instruments.mock.switch_3700 import MockSwitch3700
-        from src.instruments.mock.source_6221 import MockSource6221
-        from src.instruments.mock.source_6487 import MockSource6487
+    mode = cfg.get("mode", "mock")
 
+    if mode == "mock":
         switch = MockSwitch3700()
         current_source = MockSource6221()
-        voltmeter = MockSource6487(
+        voltmeter = MockSource6487()
+
+        controller = ExperimentController(
             switch=switch,
-            current_source=current_source
+            current_source=current_source,
+            voltmeter=voltmeter,
         )
 
-    else:
-        from src.instruments.real.switch_3700 import Switch3700
-        from src.instruments.real.source_6221 import Source6221
-        from src.instruments.real.source_6487 import Source6487
+        controller.mode = "mock"
+        return controller, switch, current_source, voltmeter
 
-        switch = Switch3700()
-        current_source = Source6221()
-        voltmeter = Source6487()
+    # -----------------------------
+    # REAL HARDWARE MODE
+    # -----------------------------
+
+    gpib = cfg["gpib_addresses"]
+
+    switch = Keithley3700(gpib["switch"])
+    current_source = Keithley6221(gpib["current_source"])
+    voltmeter = Keithley6487(gpib["voltmeter"])
 
     controller = ExperimentController(
         switch=switch,
         current_source=current_source,
         voltmeter=voltmeter,
     )
+
+    controller.mode = "real"
+
+    print("BUILD MODE:", mode)
+    print("SWITCH CLASS:", type(switch))
 
     return controller, switch, current_source, voltmeter
