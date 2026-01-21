@@ -68,6 +68,9 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage("Ready")
 
+        self.lbl_conn_status = QLabel("Disconnected")
+        self.statusBar().addPermanentWidget(self.lbl_conn_status)
+
     # -------------------------
     # UI builders
     # -------------------------
@@ -244,17 +247,30 @@ class MainWindow(QMainWindow):
         if d:
             self.txt_workdir.setText(d)
 
-    def _on_connect(self) -> None:
+    def _on_connect(self):
         if self._cfg.mode != "real":
-            self.statusBar().showMessage("Mock mode: connect() skipped")
+            self.lbl_conn_status.setText("Mock mode (connected)")
             return
 
         try:
-            self._switch.connect()
-            self._current_source.connect()
-            self._voltmeter.connect()
-            self.statusBar().showMessage("Connected")
+            idn_switch = self._switch.connect()
+            idn_current = self._current_source.connect()
+            idn_meter = self._voltmeter.connect()
+
+            msg = (
+                f"Connected:\n"
+                f"{idn_switch}\n"
+                f"{idn_current}\n"
+                f"{idn_meter}"
+            )
+
+            self.lbl_conn_status.setText("Connected")
+            self.statusBar().showMessage("Instruments connected")
+
+            QMessageBox.information(self, "Connection Successful", msg)
+
         except Exception as e:
+            self.lbl_conn_status.setText("Connection FAILED")
             QMessageBox.critical(self, "Connection Error", str(e))
 
     def _on_disconnect(self) -> None:
