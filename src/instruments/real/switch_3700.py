@@ -15,7 +15,7 @@ class Switch3700(BaseInstrument):
         self.gpib_addr = gpib_addr or self.DEFAULT_GPIB_ADDR
         self.closed_channels: Set[str] = set()
 
-    # ---------- internal helpers ----------
+    # -------- internal helpers --------
 
     def _select_addr(self):
         self.write(f"++addr {self.gpib_addr}")
@@ -28,12 +28,12 @@ class Switch3700(BaseInstrument):
         self._select_addr()
         return self.query(f"print({expr})")
 
-    # ---------- public API ----------
+    # -------- public API --------
 
     def connect(self) -> str:
         idn = super().connect()
 
-        # 3700 identity check via TSP
+        # 3700 uses TSP; verify scripting engine
         self._tsp_query("localnode.model")
         return idn
 

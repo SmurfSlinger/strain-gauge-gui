@@ -22,8 +22,6 @@ class BaseInstrument:
         self.connected: bool = False
         self.idn: Optional[str] = None
 
-    # ---------------- VISA lifecycle ----------------
-
     def connect(self) -> str:
         """
         Open VISA connection and verify communication.
@@ -32,12 +30,13 @@ class BaseInstrument:
         if self.connected:
             return self.idn or ""
 
-        self.rm = pyvisa.ResourceManager(self.cfg.backend)
-        self.inst = self.rm.open_resource(self.cfg.resource)
+        self.rm = pyvisa.ResourceManager()
+        self.inst = self.rm.open_resource(self.cfg.resource_name)
 
-        self.inst.timeout = self.cfg.timeout_ms
+        # Conservative default timeout (ms)
+        self.inst.timeout = 5000
 
-        # Standard identity query (safe for all your instruments)
+        # Standard identity query (safe for all Keithley instruments)
         self.idn = self.inst.query("*IDN?").strip()
 
         self.connected = True
@@ -53,7 +52,7 @@ class BaseInstrument:
         self.inst = None
         self.connected = False
 
-    # ---------------- Low-level helpers ----------------
+    # -------- low-level helpers --------
 
     def write(self, cmd: str):
         if not self.connected or not self.inst:
