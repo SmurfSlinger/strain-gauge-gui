@@ -1,68 +1,138 @@
-from abc import ABC
+# src/real/switch3700.py
 
-from src.instruments.abstract.switch_matrix import SwitchMatrix
+from __future__ import annotations
+from typing import Set
 
-class Switch3700(SwitchMatrix, ABC):
-    def __init__(self):
-        super().__init__("Mock3700")
-        self.closed_channels = set()
+from src.instruments.abstract.base_instrument import BaseInstrument
+from src.gui.config_loader import VisaDeviceCfg
 
-    def write(self, command: str):
-        if "CLOSe" in command:
-            ch = int(command.split("@")[1].strip(")"))
-            self.closed_channels.add(ch)
-        elif "OPEN" in command:
-            if "@(" in command:
-                ch = int(command.split("@")[1].strip(")"))
-                self.closed_channels.discard(ch)
-            else:
-                self.closed_channels.clear()
 
-    def query(self, command: str) -> str:
-        return "0"
+# src/real/switch3700.py
 
-    def open_all(self):
+class Switch3700(BaseInstrument):
+    """
+    Keithley Series 3700/3700A Switch System.
+    Switching operations use TSP channel.* calls (not SCPI route subsystem).
+    """
+
+    DEFAULT_GPIB_ADDR = 7
+
+    def __init__(self, cfg: VisaDeviceCfg, gpib_addr: Optional[int] = None):
+        super().__init__(cfg)
+        self._gpib_addr: int = gpib_addr if gpib_addr is not None else self.DEFAULT_GPIB_ADDR
+
+        # Software state (requested)
+        self.closed_channels: Set[str] = set()
+
+        # Idempotency / safety
+        self._connected: bool = False
+
+    # -----------------------
+    # Base I/O plumbing
+    # -----------------------
+
+    def _select_addr(self) -> None:
         """
-        Open all channels on the switch matrix.
+        Select the target instrument on the serial/GPIB bridge.
+
+        If you're using a Prologix-style adapter: ++addr <n>
+        If not, replace this with your bridge's addressing mechanism.
         """
-        if not self.connected:
+        self.write_raw(f"++addr {self._gpib_addr}")
+
+    def write_raw(self, cmd: str) -> None:
+        """
+        Write to the VISA session. Uses BaseInstrument helper if available.
+        """
+        if hasattr(super(), "write"):
+            super().write(cmd)  # type: ignore[misc]
+            return
+        # Fallback if BaseInstrument exposes _inst
+        self._inst.write(cmd)  # type: ignore[attr-defined]
+
+    def query_raw(self, cmd: str) -> str:
+        """
+        Query the VISA session. Uses BaseInstrument helper if available.
+        """
+        if hasattr(super(), "query"):
+            return super().query(cmd)  # type: ignore[misc]
+        return self._inst.query(cmd)  # type: ignore[attr-defined]
+
+    def _tsp_write(self, line: str) -> None:
+        self._ensure_connected()
+        self._select_addr()
+        self.write_raw(line)
+
+    def _tsp_query(self, expr: str) -> str:
+        """
+        Evaluate a TSP expression via print(...). Returns the printed string.
+        """
+        self._ensure_connected()
+        self._select_addr()
+        return self.query_raw(f"print({expr})")
+
+    def _ensure_connected(self) -> None:
+        if not self._connected:
+            raise RuntimeError("Switch3700 is not connected. Call connect() first.")
+
+    # -----------------------
+    # Public API
+    # -----------------------
+
+    def connect(self) -> None:
+        """
+        Connect to VISA resource and verify instrument responsiveness.
+        Safe to call repeatedly.
+        """
+        if self._connected:
             return
 
-        # Keithley SCPI: open all channels
-        self.inst.write("ROUTe:OPEN:ALL")
+        super().connect()
+
+        # Address + sanity check (non-destructive)
+        self._select_addr()
+
+        # Prefer TSP identity check (works in the 3700A family)
+        _ = self._tsp_query("localnode.model")
+
+        self._connected = True
+
+    def disconnect(self) -> None:
+        """
+        Safe to call repeatedly.
+        """
+        if not self._connected:
+            return
+        try:
+            super().disconnect()
+        finally:
+            self._connected = False
+
+    def open_all(self) -> None:
+        """
+        Open all channels (TSP).
+        """
+        self._tsp_write("channel.openall()")
         self.closed_channels.clear()
 
-    def close_channel(self, channel: int):
+    def open_channel(self, channel: int | str) -> None:
         """
-        Close a single channel.
+        Open a specific channel (e.g., 1101).
         """
-        if not self.connected:
-            return
+        ch = str(channel)
+        self._tsp_write(f'channel.open("{ch}")')
+        self.closed_channels.discard(ch)
 
-        # Keithley SCPI: close specific channel
-        self.inst.write(f"ROUTe:CLOSe (@{channel})")
-        self.closed_channels.add(channel)
-
-    def open_channel(self, channel: int):
+    def close_channel(self, channel: int | str) -> None:
         """
-        Open a single channel.
+        Close a specific channel (e.g., 1101).
         """
-        if not self.connected:
-            return
+        ch = str(channel)
+        self._tsp_write(f'channel.close("{ch}")')
+        self.closed_channels.add(ch)
 
-        self.inst.write(f"ROUTe:OPEN (@{channel})")
-        self.closed_channels.discard(channel)
-
-        # -------------------------
-        # Optional helpers (safe)
-        # -------------------------
-
-    def reset(self):
+    def is_channel_closed(self, channel: int | str) -> bool:
         """
-        Reset the switch to power-on defaults.
+        Purely software state (requested). No instrument query.
         """
-        if not self.connected:
-            return
-
-        self.inst.write("*RST")
-        self.closed_channels.clear()
+        return str(channel) in self.closed_channels
