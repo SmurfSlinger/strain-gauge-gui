@@ -1,33 +1,45 @@
-
-'''
-All instrument classes derive from this base class. It is functionally abstract, meaning it contains certain elements
-that the child classes may use, override (change the functionality), or ignore entirely.
-This class will not and should be not used directly. Only instantiate subclasses of this class.
-'''
+# src/instruments/base_instrument.py
 
 import pyvisa
+from typing import Optional
+
+from src.gui.config_loader import VisaDeviceCfg
 
 
 class BaseInstrument:
-    def __init__(self, resource_name: str, name: str = "None"):
-        self.resource_name = resource_name
+    """
+    Base class for all real instruments.
+    Handles VISA lifecycle only.
+    """
+
+    def __init__(self, cfg: VisaDeviceCfg, name: str):
+        self.cfg = cfg
         self.name = name
-        self.rm = None
-        self.inst = None
-        self.connected = False
-        self.idn = None
+
+        self.rm: Optional[pyvisa.ResourceManager] = None
+        self.inst: Optional[pyvisa.resources.Resource] = None
+
+        self.connected: bool = False
+        self.idn: Optional[str] = None
+
+    # ---------------- VISA lifecycle ----------------
 
     def connect(self) -> str:
         """
-        Open VISA connection and verify instrument identity.
-        Returns *IDN? string on success.
-        Raises Exception on failure.
+        Open VISA connection and verify communication.
+        Safe to call repeatedly.
         """
-        self.rm = pyvisa.ResourceManager()
-        self.inst = self.rm.open_resource(self.resource_name)
-        self.inst.timeout = 5000
+        if self.connected:
+            return self.idn or ""
 
+        self.rm = pyvisa.ResourceManager(self.cfg.backend)
+        self.inst = self.rm.open_resource(self.cfg.resource)
+
+        self.inst.timeout = self.cfg.timeout_ms
+
+        # Standard identity query (safe for all your instruments)
         self.idn = self.inst.query("*IDN?").strip()
+
         self.connected = True
         return self.idn
 
@@ -37,5 +49,18 @@ class BaseInstrument:
                 self.inst.close()
             except Exception:
                 pass
+
         self.inst = None
         self.connected = False
+
+    # ---------------- Low-level helpers ----------------
+
+    def write(self, cmd: str):
+        if not self.connected or not self.inst:
+            raise RuntimeError(f"{self.name} not connected")
+        self.inst.write(cmd)
+
+    def query(self, cmd: str) -> str:
+        if not self.connected or not self.inst:
+            raise RuntimeError(f"{self.name} not connected")
+        return self.inst.query(cmd)
