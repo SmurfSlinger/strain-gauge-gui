@@ -1,5 +1,7 @@
 # src/instruments/base_instrument.py
+import os
 
+os.environ["PYVISA_LIBRARY"] = r"C:\Windows\System32\visa64.dll"
 import pyvisa
 from typing import Optional
 
@@ -30,7 +32,8 @@ class BaseInstrument:
         if self.connected:
             return self.idn or ""
 
-        self.rm = pyvisa.ResourceManager('@ni')
+        self.rm = pyvisa.ResourceManager(r"C:\Windows\System32\visa64.dll")
+        print("VISA RM OK:", self.rm)
         self.inst = self.rm.open_resource(self.cfg.resource_name)
 
         # Conservative default timeout (ms)

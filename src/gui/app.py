@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+import os
+os.environ["PYVISA_LIBRARY"] = r"C:\Windows\System32\visa64.dll"
+
+import sys
+from PySide6.QtWidgets import QApplication
+
+
+
 import sys
 from pathlib import Path
 
