@@ -2,9 +2,10 @@
   "mode": "real",
   "sample_interval_ms": 250,
 
-  "switch": { "resource_name": "GPIB0::12::INSTR" },
-  "current_source": { "resource_name": "GPIB0::24::INSTR" },
-  "voltmeter": { "resource_name": "GPIB0::26::INSTR" },
+  "current_source": { "resource_name": "GPIB0::12::INSTR" },
+  "switch": { "resource_name": "GPIB0::16::INSTR" },
+  "voltmeter": { "resource_name": "GPIB0::22::INSTR"},
+
 
   "default_experiment": {
     "force_channel_pos": 101,
