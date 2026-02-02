@@ -31,7 +31,13 @@ def build_controller(cfg: GuiConfig):
     # REAL HARDWARE MODE
     # -----------------------------
 
-    switch = Switch3700(cfg.switch)
+    switch = Switch3700(
+        cfg.switch,
+        gpib_addr=16,
+        valid_channels=cfg.allowed_switch_channels,
+        strict=True,
+    )
+
     current_source = Source6221(cfg.current_source)
     voltmeter = Source6487(cfg.voltmeter)
 

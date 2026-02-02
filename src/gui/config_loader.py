@@ -25,13 +25,15 @@ class GuiPaths:
 
 @dataclass(frozen=True)
 class GuiConfig:
-    mode: str  # "mock" or "real"
+    mode: str
     sample_interval_ms: int
     switch: VisaDeviceCfg
     current_source: VisaDeviceCfg
     voltmeter: VisaDeviceCfg
+    allowed_switch_channels: list[int]
     default_experiment: ExperimentDefaults
     paths: GuiPaths
+
 
 
 def load_config(config_path: str | Path) -> GuiConfig:

@@ -1,19 +1,19 @@
 {
   "mode": "real",
-  "sample_interval_ms": 250,
-
-  "current_source": { "resource_name": "GPIB0::12::INSTR" },
+  "sample_interval_ms": 100,
   "switch": { "resource_name": "GPIB0::16::INSTR" },
-  "voltmeter": { "resource_name": "GPIB0::22::INSTR"},
+  "current_source": { "resource_name": "GPIB0::12::INSTR" },
+  "voltmeter": { "resource_name": "GPIB0::22::INSTR" },
 
+  "allowed_switch_channels": [1002],
 
   "default_experiment": {
-    "force_channel_pos": 101,
-    "force_channel_neg": 102,
-    "current_amps": 0.000001
+    "force_channel_pos": 1002,
+    "force_channel_neg": 1002,
+    "current_amps": 0.001
   },
 
   "paths": {
-    "default_working_directory": ""
+    "default_working_directory": "."
   }
 }
