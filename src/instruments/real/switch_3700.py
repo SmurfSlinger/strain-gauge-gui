@@ -2,6 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Iterable, Optional, Set
+from pyvisa.errors import VisaIOError
 
 from src.instruments.abstract.base_instrument import BaseInstrument
 from src.gui.config_loader import VisaDeviceCfg
@@ -74,9 +75,15 @@ class Switch3700(BaseInstrument):
 
     # ---------- internal helpers ----------
 
+    def _using_prologix(self) -> bool:
+        # Prologix controllers usually appear as ASRLx::INSTR (serial)
+        rn = (self.cfg.resource_name or "").upper()
+        return rn.startswith("ASRL")
+
     def _select_addr(self):
-        # Prologix-style controller command (leave as-is in your environment)
-        self.write(f"++addr {self.gpib_addr}")
+        # Only send Prologix commands if we are actually using a Prologix serial adapter
+        if self._using_prologix():
+            self.write(f"++addr {self.gpib_addr}")
 
     def _tsp_write(self, cmd: str):
         self._select_addr()
@@ -154,13 +161,14 @@ class Switch3700(BaseInstrument):
 
         self.closed_channels.discard(ch)
 
-    def get_channel_state(self, channel: int) -> int:
-        """
-        Returns 1 if closed, 0 if open.
-        """
-        ch = int(channel)
-        self._require_valid(ch)
-        return int(self._tsp_query_value(f"channel.getstate({ch})"))
+    def get_channel_state(self, ch: int) -> int | None:
+        try:
+            resp = self.inst.query(f"print(channel.getstate({int(ch)}))").strip()
+            if resp == "":
+                return None
+            return int(resp)
+        except Exception:
+            return None
 
     def open_all(self):
         """

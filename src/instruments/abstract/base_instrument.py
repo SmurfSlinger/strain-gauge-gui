@@ -37,7 +37,7 @@ class BaseInstrument:
         self.inst = self.rm.open_resource(self.cfg.resource_name)
 
         # Conservative default timeout (ms)
-        self.inst.timeout = 5000
+        self.inst.timeout = 200
 
         # Standard identity query (safe for all Keithley instruments)
         self.idn = self.inst.query("*IDN?").strip()

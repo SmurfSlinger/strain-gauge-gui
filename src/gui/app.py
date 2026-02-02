@@ -22,12 +22,21 @@ def main() -> int:
     cfg = load_config(Path(__file__).parent / "config.json")
     controller, switch, current_source, voltmeter = build_controller(cfg)
 
+    # Always start safe
+    controller.switch.apply_state("idle")
+
     app = QApplication(sys.argv)
     w = MainWindow(controller, switch, current_source, voltmeter, cfg)
     w.resize(1200, 650)
     w.show()
 
-    return app.exec()
+    exit_code = app.exec()
+
+    # Always leave safe
+    controller.switch.apply_state("idle")
+
+    return exit_code
+
 
 
 if __name__ == "__main__":

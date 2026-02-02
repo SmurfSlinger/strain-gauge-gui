@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from PySide6.QtCore import QThread, Signal
+from pyvisa import VisaIOError
 
 from src.controller.experiment_controller import ExperimentController, ResistanceResult
 
@@ -60,26 +61,31 @@ class AcquisitionThread(QThread):
         self.status.emit("Running")
 
         try:
+            self._controller.begin_constant_current_mode(
+                ch_pos=self._force_ch_pos,
+                ch_neg=self._force_ch_neg,
+                current_amps=self._current_amps,
+            )
+
             while self._running:
                 t_now = time.perf_counter()
                 t = t_now - (self._t0 or t_now)
 
-                # Uses your controller method (single measurement per tick)
-                rr: ResistanceResult = self._controller.run_current_driven_resistance(
-                    channel_force_pos=self._force_ch_pos,
-                    channel_force_neg=self._force_ch_neg,
-                    current_amps=self._current_amps,
-                )
+                try:
+                    rr = self._controller.take_sample()
+                except VisaIOError:
+                    # Normal: instrument not ready yet
+                    if not self._running:
+                        break
+                    continue
 
-                s = Sample(
+                self.sample_ready.emit(Sample(
                     t_seconds=t,
                     current_amps=rr.current_amps,
                     voltage_v=rr.measured_voltage,
                     resistance_ohms=rr.resistance_ohms,
-                )
-                self.sample_ready.emit(s)
+                ))
 
-                # sleep remaining time
                 elapsed_ms = (time.perf_counter() - t_now) * 1000.0
                 wait_ms = self._interval_ms - elapsed_ms
                 if wait_ms > 0:
@@ -88,4 +94,8 @@ class AcquisitionThread(QThread):
         except Exception as e:
             self.error.emit(str(e))
         finally:
+            try:
+                self._controller.stop_outputs()
+            except Exception:
+                pass
             self.status.emit("Stopped")

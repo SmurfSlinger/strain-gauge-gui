@@ -15,41 +15,47 @@ class ExperimentController:
         self.current_source = current_source
         self.voltmeter = voltmeter
 
-    def run_current_driven_resistance(
-        self,
-        channel_force_pos: int,
-        channel_force_neg: int,
-        current_amps: float
-    ) -> ResistanceResult:
-        """
-        Perform a simple current-driven resistance measurement.
+        self._current_amps = 0.0
+        self._armed = False
 
-        - Close two force channels
-        - Force a current
-        - Measure voltage
-        - Compute resistance
-        """
-
-        # Route
+    def begin_constant_current_mode(self, ch_pos: int, ch_neg: int, current_amps: float) -> None:
+        # Configure routing ONCE at start
         self.switch.open_all()
-        self.switch.close_channel(channel_force_pos)
-        self.switch.close_channel(channel_force_neg)
+        self.switch.close_channel(int(ch_pos))
+        self.switch.close_channel(int(ch_neg))
 
-        # Excite
-        self.current_source.set_current(current_amps)
+        # Configure source ONCE at start
+        self.current_source.set_current(float(current_amps))
         self.current_source.set_output(True)
 
-        # Measure
-        measured_voltage = self.voltmeter.measure_voltage()
+        self._current_amps = float(current_amps)
+        self._armed = True
 
-        # Cleanup
-        self.current_source.set_output(False)
-        self.switch.open_all()
+    def take_sample(self) -> ResistanceResult:
+        if not self._armed:
+            raise RuntimeError("ExperimentController not armed. Call begin_constant_current_mode() first.")
 
-        resistance = measured_voltage / current_amps if current_amps != 0 else 0.0
+        v = self.voltmeter.measure_voltage()
+        i = self._current_amps
+        r = (v / i) if i != 0 else 0.0
 
-        return ResistanceResult(
-            current_amps=current_amps,
-            measured_voltage=measured_voltage,
-            resistance_ohms=resistance
-        )
+        return ResistanceResult(current_amps=i, measured_voltage=v, resistance_ohms=r)
+
+    def stop_outputs(self) -> None:
+        # Fast “stop measuring” safety: turn source off
+        try:
+            self.current_source.set_output(False)
+        finally:
+            self._armed = False
+
+    def safe_idle(self) -> None:
+        # Full “reset hardware” safety: open relays + output off
+        try:
+            self.current_source.set_output(False)
+        except Exception:
+            pass
+        try:
+            self.switch.open_all()
+        except Exception:
+            pass
+        self._armed = False
