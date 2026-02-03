@@ -32,12 +32,11 @@ class Source6487(BaseInstrument):
         self.connected = True
         
         if not self._configured:
-            # Configure for DC voltage measurement
-            self.write("CONF:VOLT:DC")  # Configure for DC voltage
-            self.write("VOLT:RANG:AUTO ON")  # Auto-ranging
-            self.write("VOLT:NPLC 1")  # Fast integration
-            self.write("FORM:ELEM READ")  # Simple reading format
-            self.write("*CLS")  # Clear any config errors
+            # CONF:VOLT:DC, VOLT:RANG:AUTO, VOLT:NPLC are not valid on the 6487.
+            # The 6487 uses SYST:MEAS commands for configuration.
+            # FORM:ELEM READ is valid and ensures clean output format.
+            self.write("FORM:ELEM READ")
+            self.write("*CLS")
             self._configured = True
         
         return self.idn
