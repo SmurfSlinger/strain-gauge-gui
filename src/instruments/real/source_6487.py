@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from src.instruments.abstract.base_instrument import BaseInstrument
-from src.gui.config_loader import VisaDeviceCfg  # adjust to your project
+from src.gui.config_loader import VisaDeviceCfg
 
 class Source6487(BaseInstrument):
     DEFAULT_GPIB_ADDR = 22
@@ -17,59 +17,67 @@ class Source6487(BaseInstrument):
 
     def connect(self) -> str:
         """Connect and configure the instrument for voltage measurements."""
-        # Flush any stale data in the output buffer before IDN query
         import pyvisa
         import time
         
         self.rm = pyvisa.ResourceManager(r"C:\Windows\System32\visa64.dll")
         self.inst = self.rm.open_resource(self.cfg.resource_name)
-        self.inst.timeout = 5000
+        self.inst.timeout = 10000  # Longer timeout for 6487
         
         # Clear errors and flush buffer before doing anything
         self.inst.write("*CLS")
-        time.sleep(0.2)  # Give instrument time to clear
+        time.sleep(0.2)
         
         # Now do the IDN query cleanly
         self.idn = self.inst.query("*IDN?").strip()
         self.connected = True
         
         if not self._configured:
-            # Configure 6487 for continuous voltage measurements
-            # Set format to ASCII, reading only
-            self.write("FORM:ELEM READ")
+            # CRITICAL: Proper initialization sequence for 6487
+            self.write("*RST")  # Reset to known state
+            time.sleep(0.5)
             
-            # Configure for fast voltage measurements
-            # NPLC 0.01 = ~167 microseconds per reading (very fast)
-            self.write("NPLC 0.01")
-            
-            # Disable zero check (allows measurements)
-            self.write("SYST:ZCH OFF")
-            
-            # Use voltage source at 0V (becomes voltmeter)
+            # Configure for voltage measurements (default mode)
             self.write("SOUR:VOLT:STAT OFF")  # Turn OFF voltage source
-            
-            # Clear errors
-            self.write("*CLS")
+            self.write("SOUR:VOLT:RANG 50")  # Set voltage source range
+            self.write("SENS:FUNC 'VOLT'")  # Set to voltage measurement mode
+            self.write("SENS:VOLT:RANG:AUTO ON")  # Auto-range for voltage
+            self.write("FORM:ELEM READ")  # Format: reading only
+            self.write("SYST:ZCH OFF")  # Disable zero check
+            self.write("ARM:SOUR IMM")  # Immediate arming
+            self.write("ARM:COUN 1")  # Single reading per trigger
+            self.write("*CLS")  # Clear errors
+            time.sleep(0.3)
             
             self._configured = True
         
         return self.idn
 
     def measure_voltage(self) -> float:
-        # READ? triggers measurement and returns result
-        # This command waits for measurement to complete
+        """Measure voltage (use when 6487 is in voltmeter mode)."""
         try:
-            result = self.query("READ?")
+            # INIT initiates measurement, FETC? retrieves result
+            self.write("INIT")
+            result = self.query("FETC?")
             return float(result.strip())
         except Exception as e:
-            # If timeout or error, clear status and try once more
+            # If timeout or error, clear status and try READ? method
             self.write("*CLS")
             result = self.query("READ?")
             return float(result.strip())
 
     def measure_current(self) -> float:
-        # 6487 uses READ? to get a reading
-        return float(self.query("READ?").strip())
+        """Measure current (use when 6487 is sourcing voltage)."""
+        # When sourcing voltage, 6487 measures current simultaneously
+        # Just fetch the reading
+        try:
+            self.write("INIT")
+            result = self.query("FETC?")
+            return float(result.strip())
+        except Exception:
+            self.write("*CLS")
+            result = self.query("READ?")
+            return float(result.strip())
     
     def set_voltage(self, volts: float):
         """Set output voltage for voltage-driven measurements."""
@@ -78,5 +86,16 @@ class Source6487(BaseInstrument):
     
     def set_voltage_output(self, enabled: bool):
         """Enable/disable voltage source output."""
-        self.write("SOUR:VOLT:STAT ON" if enabled else "SOUR:VOLT:STAT OFF")
+        if enabled:
+            # When enabling voltage source, switch to current measurement mode
+            self.write("SENS:FUNC 'CURR'")  # Measure current
+            self.write("SENS:CURR:RANG:AUTO ON")  # Auto-range for current
+            self.write("SOUR:VOLT:STAT ON")  # Enable voltage source
+        else:
+            # When disabling, switch back to voltage measurement mode
+            self.write("SOUR:VOLT:STAT OFF")  # Disable voltage source
+            self.write("SENS:FUNC 'VOLT'")  # Measure voltage
+            self.write("SENS:VOLT:RANG:AUTO ON")  # Auto-range for voltage
+        
+        self.write("*CLS")
         self.output_enabled = enabled
