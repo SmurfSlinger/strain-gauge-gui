@@ -75,6 +75,7 @@ class Switch3700(BaseInstrument):
 
     # ---------- internal helpers ----------
 
+<<<<<<< Updated upstream
     def _using_prologix(self) -> bool:
         # Prologix controllers usually appear as ASRLx::INSTR (serial)
         rn = (self.cfg.resource_name or "").upper()
@@ -85,8 +86,9 @@ class Switch3700(BaseInstrument):
         if self._using_prologix():
             self.write(f"++addr {self.gpib_addr}")
 
+=======
+>>>>>>> Stashed changes
     def _tsp_write(self, cmd: str):
-        self._select_addr()
         self.write(cmd)
 
     def _tsp_query_value(self, expr: str) -> str:
@@ -94,7 +96,6 @@ class Switch3700(BaseInstrument):
         Query an expression by printing it.
         Always returns a single-line string suitable for PyVISA query().
         """
-        self._select_addr()
         return self.query(f"print({expr})").strip()
 
     def _waitcomplete(self):
