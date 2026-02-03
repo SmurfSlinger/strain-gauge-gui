@@ -109,6 +109,7 @@ class MainWindow(QMainWindow):
         if self._cfg.measurement_cases:
             self.multiplex_panel = MultiplexPanel(self._cfg.measurement_cases)
             self.multiplex_panel.case_changed.connect(self._on_multiplex_case_changed)
+            self.multiplex_panel.switch_requested.connect(self._switch_to_next_case)
             left.addWidget(self.multiplex_panel)
         else:
             self.multiplex_panel = None
@@ -257,6 +258,57 @@ class MainWindow(QMainWindow):
         """Show the help dialog."""
         dialog = HelpDialog(self)
         dialog.exec()
+    
+    def _switch_to_next_case(self):
+        """Switch to the next measurement case (for multiplexing)."""
+        if not self.multiplex_panel or not self._thread or not self._thread.isRunning():
+            return
+        
+        try:
+            # Get old channels to open
+            old_pos = self.spin_ch_pos.value()
+            old_neg = self.spin_ch_neg.value()
+            
+            # Advance to next case
+            self.multiplex_panel.auto_advance_case()
+            
+            # Get new case
+            case = self.multiplex_panel.get_current_case()
+            if not case:
+                return
+            
+            new_pos = case.force_channel_pos
+            new_neg = case.force_channel_neg
+            
+            # Update spinboxes
+            self.spin_ch_pos.setValue(new_pos)
+            self.spin_ch_neg.setValue(new_neg)
+            
+            # Reconfigure hardware:
+            # 1. Stop current source output
+            self._controller.stop_outputs()
+            
+            # 2. Open old channels
+            self._switch.open_channel(old_pos)
+            if old_neg != old_pos:
+                self._switch.open_channel(old_neg)
+            
+            # 3. Close new channels
+            self._switch.close_channel(new_pos)
+            if new_neg != new_pos:
+                self._switch.close_channel(new_neg)
+            
+            # 4. Restart current source with new channels
+            self._controller.begin_constant_current_mode(
+                ch_pos=new_pos,
+                ch_neg=new_neg,
+                current_amps=self.spin_current.value(),
+            )
+            
+            self.statusBar().showMessage(f"Switched to {case.name}")
+            
+        except Exception as e:
+            self.error.emit(f"Error switching cases: {e}")
                 
     def _on_connect(self):
         if self._cfg.mode != "real":
@@ -422,6 +474,14 @@ class MainWindow(QMainWindow):
         # CSV record
         if self._recording:
             self._write_csv(sample)
+        
+        # Handle multiplexing auto-advance
+        if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
+            self.multiplex_panel.increment_reading_count()
+            
+            # Check if we should auto-advance to next case
+            if self.multiplex_panel.should_auto_advance():
+                self._switch_to_next_case()
 
     # -------------------------
     # CSV
