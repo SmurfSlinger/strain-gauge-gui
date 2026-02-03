@@ -51,6 +51,10 @@ class MainWindow(QMainWindow):
         self._recording = False
         self._csv_fp = None
         self._csv_writer = None
+        
+        # Plot update throttling (reduce visual choppiness)
+        self._last_plot_update = 0.0
+        self._plot_update_interval = 0.5  # Update plot every 0.5 seconds
 
         root = QWidget()
         self.setCentralWidget(root)
@@ -493,15 +497,19 @@ class MainWindow(QMainWindow):
         else:
             y = sample.current_amps
 
-        # Plot to the appropriate canvas
-        if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
-            # Multi-gauge mode: include case name for color-coded plotting
-            case = self.multiplex_panel.get_current_case()
-            case_name = case.name if case else "Unknown"
-            self.plot_multi.append_point(sample.t_seconds, y, case_name)
-        else:
-            # Single-gauge mode: just plot the point
-            self.plot_single.append_point(sample.t_seconds, y)
+        # Plot to the appropriate canvas (throttled for smooth updates)
+        # Only update plot if enough time has passed since last update
+        if sample.t_seconds - self._last_plot_update >= self._plot_update_interval:
+            if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
+                # Multi-gauge mode: include case name for color-coded plotting
+                case = self.multiplex_panel.get_current_case()
+                case_name = case.name if case else "Unknown"
+                self.plot_multi.append_point(sample.t_seconds, y, case_name)
+            else:
+                # Single-gauge mode: just plot the point
+                self.plot_single.append_point(sample.t_seconds, y)
+            
+            self._last_plot_update = sample.t_seconds
 
         # CSV record
         if self._recording:
