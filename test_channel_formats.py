@@ -11,9 +11,9 @@ sw.timeout = 5000
 def check():
     err = sw.query("print(errorqueue.next())").strip()
     if "Queue Is Empty" in err or err.startswith("0"):
-        print("    ✓ OK")
+        print("    [OK]")
     else:
-        print(f"    ✗ ERROR: {err}")
+        print(f"    [ERROR] {err}")
 
 sw.write("errorqueue.clear()")
 time.sleep(0.2)
