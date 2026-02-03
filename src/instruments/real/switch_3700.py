@@ -136,8 +136,8 @@ class Switch3700(BaseInstrument):
         ch = int(channel)
         self._require_valid(ch)
 
-        # IMPORTANT: channels must be numeric, NOT quoted strings
-        self._tsp_write(f"channel.close({ch})")
+        # IMPORTANT: TSP requires channels as quoted strings
+        self._tsp_write(f'channel.close("{ch}")')
         self._waitcomplete()
 
         self.closed_channels.add(ch)
@@ -146,14 +146,14 @@ class Switch3700(BaseInstrument):
         ch = int(channel)
         self._require_valid(ch)
 
-        self._tsp_write(f"channel.open({ch})")
+        self._tsp_write(f'channel.open("{ch}")')
         self._waitcomplete()
 
         self.closed_channels.discard(ch)
 
     def get_channel_state(self, ch: int) -> int | None:
         try:
-            resp = self.inst.query(f"print(channel.getstate({int(ch)}))").strip()
+            resp = self._tsp_query_value(f'channel.getstate("{int(ch)}")')
             if resp == "":
                 return None
             return int(resp)
