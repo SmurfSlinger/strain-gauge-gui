@@ -3,10 +3,9 @@ from __future__ import annotations
 import os
 os.environ["PYVISA_LIBRARY"] = r"C:\Windows\System32\visa64.dll"
 
-import sys
-from PySide6.QtWidgets import QApplication
-
-
+# Suppress Qt icon loading warnings
+import logging
+logging.getLogger().setLevel(logging.CRITICAL)
 
 import sys
 from pathlib import Path
