@@ -36,12 +36,16 @@ class AcquisitionThread(QThread):
         force_ch_neg: int,
         current_amps: float,
         interval_ms: int,
+        sense_ch_pos: int | None = None,
+        sense_ch_neg: int | None = None,
         parent=None,
     ):
         super().__init__(parent)
         self._controller = controller
         self._force_ch_pos = force_ch_pos
         self._force_ch_neg = force_ch_neg
+        self._sense_ch_pos = sense_ch_pos
+        self._sense_ch_neg = sense_ch_neg
         self._current_amps = current_amps
         self._interval_ms = max(50, int(interval_ms))
         self._running = False
@@ -65,6 +69,8 @@ class AcquisitionThread(QThread):
                 ch_pos=self._force_ch_pos,
                 ch_neg=self._force_ch_neg,
                 current_amps=self._current_amps,
+                sense_ch_pos=self._sense_ch_pos,
+                sense_ch_neg=self._sense_ch_neg,
             )
 
             while self._running:

@@ -426,10 +426,17 @@ class MainWindow(QMainWindow):
         ch_pos = int(self.spin_ch_pos.value())
         ch_neg = int(self.spin_ch_neg.value())
 
+        # Get current case to determine all channels that need to be closed
+        # (includes sense channels for 4-wire measurements)
+        channels_to_close = [ch_pos, ch_neg]
+        if self.multiplex_panel:
+            case = self.multiplex_panel.get_current_case()
+            if case and case.is_4_wire():
+                channels_to_close = case.get_all_channels()
+
         try:
-            self._switch.close_channel(ch_pos)
-            if ch_neg != ch_pos:
-                self._switch.close_channel(ch_neg)
+            for ch in channels_to_close:
+                self._switch.close_channel(ch)
         except Exception as e:
             QMessageBox.critical(self, "Switch Error", str(e))
             return
@@ -463,6 +470,15 @@ class MainWindow(QMainWindow):
             self.plot_single.show()
             self.plot = self.plot_single
 
+        # Get sense channels if this is a 4-wire measurement
+        sense_ch_pos = None
+        sense_ch_neg = None
+        if self.multiplex_panel:
+            case = self.multiplex_panel.get_current_case()
+            if case and case.is_4_wire():
+                sense_ch_pos = case.sense_channel_pos
+                sense_ch_neg = case.sense_channel_neg
+        
         # ONLY NOW start the acquisition thread
         self._thread = AcquisitionThread(
             controller=self._controller,
@@ -470,6 +486,8 @@ class MainWindow(QMainWindow):
             force_ch_neg=ch_neg,
             current_amps=self.spin_current.value(),
             interval_ms=self.spin_interval.value(),
+            sense_ch_pos=sense_ch_pos,
+            sense_ch_neg=sense_ch_neg,
         )
 
         self._thread.sample_ready.connect(self._on_sample)
