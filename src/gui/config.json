@@ -44,13 +44,12 @@
       "sense_channel_neg": null
     },
     {
-      "name": "Gauge 4 (4-wire example)",
+      "name": "Gauge 4",
       "wire_mode": "4-wire",
       "force_channel_pos": 1007,
       "force_channel_neg": 1008,
       "sense_channel_pos": 1009,
-      "sense_channel_neg": 1010,
-      "comment": "Example 4-wire configuration - edit channels as needed"
+      "sense_channel_neg": 1010
     }
   ],
 
