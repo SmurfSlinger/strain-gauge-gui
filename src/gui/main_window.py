@@ -98,33 +98,23 @@ class MainWindow(QMainWindow):
 
         left.addWidget(g)
 
-        # “Old multiplexing code (not necessary)” from the thesis screenshot
-        # Provided as placeholders so layout matches; you can remove later.
-        self.btn_auto_mux = QPushButton("Automatically Multiplex?")
-        self.btn_manual_mux = QPushButton("Manually Multiplex?")
-        self.btn_switch_case = QPushButton("Switch Case")
+        # Multiplexing panel
+        if self._cfg.measurement_cases:
+            self.multiplex_panel = MultiplexPanel(self._cfg.measurement_cases)
+            self.multiplex_panel.case_changed.connect(self._on_multiplex_case_changed)
+            left.addWidget(self.multiplex_panel)
+        else:
+            self.multiplex_panel = None
 
-        left.addWidget(self.btn_auto_mux)
-        left.addWidget(self.btn_manual_mux)
-        left.addWidget(self.btn_switch_case)
-
-        # Small status-ish area (placeholders)
-        small = QGroupBox()
-        sg = QGridLayout(small)
-        sg.addWidget(QLabel("Readings/Case"), 0, 0)
-        self.lbl_readings_case = QLabel("0")
-        sg.addWidget(self.lbl_readings_case, 0, 1)
-
-        sg.addWidget(QLabel("Switch Case"), 1, 0)
-        self.lbl_switch_case = QLabel("0")
-        sg.addWidget(self.lbl_switch_case, 1, 1)
-
-        sg.addWidget(QLabel("Compliance"), 2, 0)
-        self.lbl_compliance = QLabel("●")  # simple LED-like indicator
+        # Compliance indicator
+        compliance = QGroupBox("Status")
+        cg = QGridLayout(compliance)
+        cg.addWidget(QLabel("Compliance"), 0, 0)
+        self.lbl_compliance = QLabel("●")
         self.lbl_compliance.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        sg.addWidget(self.lbl_compliance, 2, 1)
+        cg.addWidget(self.lbl_compliance, 0, 1)
+        left.addWidget(compliance)
 
-        left.addWidget(small)
         left.addStretch(1)
 
     def _build_center_panel(self, center: QVBoxLayout) -> None:
@@ -248,6 +238,14 @@ class MainWindow(QMainWindow):
         if d:
             self.txt_workdir.setText(d)
 
+    def _on_multiplex_case_changed(self, case_idx):
+        """User changed which gauge/case to measure."""
+        if self.multiplex_panel:
+            case = self.multiplex_panel.get_current_case()
+            if case:
+                self.spin_ch_pos.setValue(case.force_channel_pos)
+                self.spin_ch_neg.setValue(case.force_channel_neg)
+                
     def _on_connect(self):
         if self._cfg.mode != "real":
             self._connected = True
