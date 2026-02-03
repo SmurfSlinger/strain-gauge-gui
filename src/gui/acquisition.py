@@ -38,6 +38,8 @@ class AcquisitionThread(QThread):
         interval_ms: int,
         sense_ch_pos: int | None = None,
         sense_ch_neg: int | None = None,
+        measurement_mode: str = "current_driven",
+        voltage_volts: float = 0.0,
         parent=None,
     ):
         super().__init__(parent)
@@ -47,6 +49,8 @@ class AcquisitionThread(QThread):
         self._sense_ch_pos = sense_ch_pos
         self._sense_ch_neg = sense_ch_neg
         self._current_amps = current_amps
+        self._voltage_volts = voltage_volts
+        self._measurement_mode = measurement_mode
         self._interval_ms = max(50, int(interval_ms))
         self._running = False
         self._t0: Optional[float] = None
@@ -65,13 +69,22 @@ class AcquisitionThread(QThread):
         self.status.emit("Running")
 
         try:
-            self._controller.begin_constant_current_mode(
-                ch_pos=self._force_ch_pos,
-                ch_neg=self._force_ch_neg,
-                current_amps=self._current_amps,
-                sense_ch_pos=self._sense_ch_pos,
-                sense_ch_neg=self._sense_ch_neg,
-            )
+            if self._measurement_mode == "current_driven":
+                self._controller.begin_constant_current_mode(
+                    ch_pos=self._force_ch_pos,
+                    ch_neg=self._force_ch_neg,
+                    current_amps=self._current_amps,
+                    sense_ch_pos=self._sense_ch_pos,
+                    sense_ch_neg=self._sense_ch_neg,
+                )
+            else:  # voltage_driven
+                self._controller.begin_constant_voltage_mode(
+                    ch_pos=self._force_ch_pos,
+                    ch_neg=self._force_ch_neg,
+                    voltage_volts=self._voltage_volts,
+                    sense_ch_pos=self._sense_ch_pos,
+                    sense_ch_neg=self._sense_ch_neg,
+                )
 
             while self._running:
                 t_now = time.perf_counter()
