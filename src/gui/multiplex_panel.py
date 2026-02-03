@@ -37,8 +37,11 @@ class MultiplexPanel(QGroupBox):
         case_row.addWidget(QLabel("Case:"))
         self.cmb_case = QComboBox()
         for case in measurement_cases:
-            # Show both name and channels in dropdown
-            display_text = f"{case.name} (Ch {case.force_channel_pos}/{case.force_channel_neg})"
+            # Show name, wire mode, and channels in dropdown
+            if case.is_4_wire():
+                display_text = f"{case.name} (4W: F{case.force_channel_pos}/{case.force_channel_neg} S{case.sense_channel_pos}/{case.sense_channel_neg})"
+            else:
+                display_text = f"{case.name} (2W: {case.force_channel_pos}/{case.force_channel_neg})"
             self.cmb_case.addItem(display_text)
         self.cmb_case.currentIndexChanged.connect(self._on_case_changed)
         case_row.addWidget(self.cmb_case, 1)
@@ -50,7 +53,13 @@ class MultiplexPanel(QGroupBox):
         channels_label.setStyleSheet("QLabel { color: #666; font-size: 9pt; }")
         if measurement_cases:
             first_case = measurement_cases[0]
-            channels_label.setText(f"Force+: {first_case.force_channel_pos}, Force-: {first_case.force_channel_neg}")
+            if first_case.is_4_wire():
+                channels_label.setText(
+                    f"Force: {first_case.force_channel_pos}/{first_case.force_channel_neg} | "
+                    f"Sense: {first_case.sense_channel_pos}/{first_case.sense_channel_neg}"
+                )
+            else:
+                channels_label.setText(f"Force+: {first_case.force_channel_pos}, Force-: {first_case.force_channel_neg}")
         self.lbl_channels = channels_label
         layout.addWidget(self.lbl_channels)
         
@@ -108,7 +117,13 @@ class MultiplexPanel(QGroupBox):
         self._readings_count = 0
         case = self._cases[idx]
         self.lbl_current_case.setText(case.name)
-        self.lbl_channels.setText(f"Force+: {case.force_channel_pos}, Force-: {case.force_channel_neg}")
+        if case.is_4_wire():
+            self.lbl_channels.setText(
+                f"Force: {case.force_channel_pos}/{case.force_channel_neg} | "
+                f"Sense: {case.sense_channel_pos}/{case.sense_channel_neg}"
+            )
+        else:
+            self.lbl_channels.setText(f"Force+: {case.force_channel_pos}, Force-: {case.force_channel_neg}")
         self.lbl_reading_count.setText("0")
         self.case_changed.emit(idx)
     
@@ -167,5 +182,11 @@ class MultiplexPanel(QGroupBox):
         self._current_case_idx = next_idx
         case = self._cases[next_idx]
         self.lbl_current_case.setText(case.name)
-        self.lbl_channels.setText(f"Force+: {case.force_channel_pos}, Force-: {case.force_channel_neg}")
+        if case.is_4_wire():
+            self.lbl_channels.setText(
+                f"Force: {case.force_channel_pos}/{case.force_channel_neg} | "
+                f"Sense: {case.sense_channel_pos}/{case.sense_channel_neg}"
+            )
+        else:
+            self.lbl_channels.setText(f"Force+: {case.force_channel_pos}, Force-: {case.force_channel_neg}")
         self.reset_reading_count()

@@ -28,6 +28,19 @@ class MeasurementCase:
     name: str
     force_channel_pos: int
     force_channel_neg: int
+    wire_mode: str = "2-wire"  # "2-wire" or "4-wire"
+    sense_channel_pos: int | None = None  # For 4-wire measurements
+    sense_channel_neg: int | None = None  # For 4-wire measurements
+    
+    def is_4_wire(self) -> bool:
+        return self.wire_mode == "4-wire"
+    
+    def get_all_channels(self) -> list[int]:
+        """Returns all channels used by this case."""
+        channels = [self.force_channel_pos, self.force_channel_neg]
+        if self.is_4_wire() and self.sense_channel_pos and self.sense_channel_neg:
+            channels.extend([self.sense_channel_pos, self.sense_channel_neg])
+        return channels
 
 
 @dataclass(frozen=True)
@@ -65,7 +78,17 @@ def load_config(path: Path) -> GuiConfig:
         allowed_switch_channels=raw["allowed_switch_channels"],
         default_experiment=ExperimentDefaults(**raw["default_experiment"]),
         paths=GuiPaths(**raw["paths"]),
-        measurement_cases=[MeasurementCase(**case) for case in raw.get("measurement_cases", [])],
+        measurement_cases=[
+            MeasurementCase(
+                name=case["name"],
+                force_channel_pos=case["force_channel_pos"],
+                force_channel_neg=case["force_channel_neg"],
+                wire_mode=case.get("wire_mode", "2-wire"),
+                sense_channel_pos=case.get("sense_channel_pos"),
+                sense_channel_neg=case.get("sense_channel_neg")
+            )
+            for case in raw.get("measurement_cases", [])
+        ],
         multiplexing=MultiplexingConfig(**raw.get("multiplexing", {
             "enabled": False,
             "auto_cycle": False,

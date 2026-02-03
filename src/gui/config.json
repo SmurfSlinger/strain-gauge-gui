@@ -21,18 +21,36 @@
   "measurement_cases": [
     {
       "name": "Gauge 1",
+      "wire_mode": "2-wire",
       "force_channel_pos": 1001,
-      "force_channel_neg": 1002
+      "force_channel_neg": 1002,
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
       "name": "Gauge 2",
+      "wire_mode": "2-wire",
       "force_channel_pos": 1003,
-      "force_channel_neg": 1004
+      "force_channel_neg": 1004,
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
       "name": "Gauge 3",
+      "wire_mode": "2-wire",
       "force_channel_pos": 1005,
-      "force_channel_neg": 1006
+      "force_channel_neg": 1006,
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
+    },
+    {
+      "name": "Gauge 4 (4-wire example)",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1007,
+      "force_channel_neg": 1008,
+      "sense_channel_pos": 1009,
+      "sense_channel_neg": 1010,
+      "comment": "Example 4-wire configuration - edit channels as needed"
     }
   ],
 

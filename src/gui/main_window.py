@@ -27,6 +27,7 @@ from src.gui.mpl_canvas import MplPlotCanvas
 from src.gui.mpl_multi_canvas import MplMultiGaugeCanvas
 from src.gui.multiplex_panel import MultiplexPanel
 from src.gui.help_dialog import HelpDialog
+from src.gui.settings_dialog import SettingsDialog
 
 
 class MainWindow(QMainWindow):
@@ -43,6 +44,13 @@ class MainWindow(QMainWindow):
 
         # Create menu bar
         menubar = self.menuBar()
+        
+        # Settings menu
+        settings_menu = menubar.addMenu("&Settings")
+        settings_action = settings_menu.addAction("&Preferences...")
+        settings_action.triggered.connect(self._on_open_settings)
+        
+        # Help menu
         help_menu = menubar.addMenu("&Help")
         help_action = help_menu.addAction("&User Guide")
         help_action.triggered.connect(self._on_show_help)
@@ -272,6 +280,12 @@ class MainWindow(QMainWindow):
                 self.spin_ch_pos.setValue(case.force_channel_pos)
                 self.spin_ch_neg.setValue(case.force_channel_neg)
 
+    def _on_open_settings(self):
+        """Open the settings dialog."""
+        config_path = Path(__file__).parent / "config.json"
+        dialog = SettingsDialog(config_path, parent=self)
+        dialog.exec()
+    
     def _on_show_help(self):
         """Show the help dialog."""
         dialog = HelpDialog(self)
@@ -306,15 +320,17 @@ class MainWindow(QMainWindow):
             # IMPORTANT: Don't call stop_outputs() - keep current source running!
             # Just switch the relay channels while current is still flowing
             
-            # 1. Open old channels
-            self._switch.open_channel(old_pos)
-            if old_neg != old_pos:
-                self._switch.open_channel(old_neg)
+            # Get old case to properly close all channels
+            old_case_idx = (self.multiplex_panel._current_case_idx - 1) % len(self._cfg.measurement_cases)
+            old_case = self._cfg.measurement_cases[old_case_idx]
             
-            # 2. Close new channels
-            self._switch.close_channel(new_pos)
-            if new_neg != new_pos:
-                self._switch.close_channel(new_neg)
+            # 1. Open ALL old channels (force + sense if 4-wire)
+            for ch in old_case.get_all_channels():
+                self._switch.open_channel(ch)
+            
+            # 2. Close ALL new channels (force + sense if 4-wire)
+            for ch in case.get_all_channels():
+                self._switch.close_channel(ch)
             
             # Current source stays on - controller remains armed
             # Next take_sample() will measure the new gauge
