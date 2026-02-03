@@ -450,7 +450,7 @@ class MainWindow(QMainWindow):
             f"{s.t_seconds:.6f}",
             f"{s.current_amps:.6e}",
             f"{s.voltage_v:.6e}",
-            f"{s.resistance_ohms:.6f}",
+            f"{s.resistance_ohms:.6e}",
             f"{s.load_lbs:.6f}",
             f"{s.extension_in:.6f}",
             f"{s.strain_1:.6e}",

@@ -103,6 +103,8 @@ class Switch3700(BaseInstrument):
         idn = super().connect()
         # Verify TSP is alive (safe)
         _ = self._tsp_query_value("_VERSION")
+        # Clear any leftover errors from previous sessions
+        self._tsp_write("errorqueue.clear()")
         return idn
 
     # ---- topology management ----
