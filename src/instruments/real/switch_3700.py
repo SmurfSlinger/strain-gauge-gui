@@ -75,19 +75,6 @@ class Switch3700(BaseInstrument):
 
     # ---------- internal helpers ----------
 
-<<<<<<< Updated upstream
-    def _using_prologix(self) -> bool:
-        # Prologix controllers usually appear as ASRLx::INSTR (serial)
-        rn = (self.cfg.resource_name or "").upper()
-        return rn.startswith("ASRL")
-
-    def _select_addr(self):
-        # Only send Prologix commands if we are actually using a Prologix serial adapter
-        if self._using_prologix():
-            self.write(f"++addr {self.gpib_addr}")
-
-=======
->>>>>>> Stashed changes
     def _tsp_write(self, cmd: str):
         self.write(cmd)
 
