@@ -70,7 +70,7 @@ except Exception as e:
 print("\n4. Testing Picoammeter/Voltage Source (GPIB0::22::INSTR)...")
 try:
     voltmeter = rm.open_resource("GPIB0::22::INSTR")
-    voltmeter.timeout = 5000
+    voltmeter.timeout = 10000  # Longer timeout for slow instrument
     
     # Clear buffer first
     voltmeter.write("*CLS")
@@ -79,20 +79,39 @@ try:
     idn = voltmeter.query("*IDN?").strip()
     print(f"   [OK] Connected: {idn}")
     
-    # Test voltage measurement
-    voltmeter.write("FORM:ELEM READ")
-    voltmeter.write("NPLC 0.01")
-    voltmeter.write("SYST:ZCH OFF")
+    # Test voltage measurement - configure properly
+    print("   Configuring for voltage measurements...")
+    voltmeter.write("*RST")  # Reset to known state
+    time.sleep(0.5)
+    
     voltmeter.write("SOUR:VOLT:STAT OFF")  # Turn OFF voltage source
-    voltmeter.write("*CLS")
-    time.sleep(0.2)
+    voltmeter.write("SOUR:VOLT:RANG 50")  # Set voltage source range
+    voltmeter.write("SENS:FUNC 'VOLT'")  # Set to voltage measurement mode
+    voltmeter.write("SENS:VOLT:RANG:AUTO ON")  # Auto-range
+    voltmeter.write("FORM:ELEM READ")  # Format: reading only
+    voltmeter.write("SYST:ZCH OFF")  # Disable zero check
+    voltmeter.write("ARM:SOUR IMM")  # Immediate arming
+    voltmeter.write("ARM:COUN 1")  # Single reading
+    voltmeter.write("*CLS")  # Clear errors
+    time.sleep(0.3)
     
     print("   Taking a test voltage reading...")
     try:
-        v = voltmeter.query("READ?")
+        # Initiate reading
+        voltmeter.write("INIT")
+        time.sleep(0.2)
+        # Fetch the reading
+        v = voltmeter.query("FETC?")
         print(f"   [OK] Voltage reading: {v.strip()} V")
     except Exception as e:
         print(f"   [FAIL] Read failed: {e}")
+        print(f"   Trying alternate method...")
+        try:
+            # Try READ? which initiates and fetches
+            v = voltmeter.query("READ?")
+            print(f"   [OK] Voltage reading (alternate): {v.strip()} V")
+        except Exception as e2:
+            print(f"   [FAIL] Alternate method also failed: {e2}")
     
     voltmeter.close()
 except Exception as e:
