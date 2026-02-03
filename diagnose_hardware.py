@@ -30,7 +30,7 @@ try:
     switch = rm.open_resource("GPIB0::16::INSTR")
     switch.timeout = 5000
     idn = switch.query("*IDN?").strip()
-    print(f"   ✓ Connected: {idn}")
+    print(f"   [OK] Connected: {idn}")
     
     # Test open/close channel
     print("   Testing channel control...")
@@ -40,16 +40,16 @@ try:
     
     switch.write("channel.close(1001)")
     switch.write("waitcomplete()")
-    print("   ✓ Channel 1001 closed (you should hear 1 click)")
+    print("   [OK] Channel 1001 closed (you should hear 1 click)")
     time.sleep(1)
     
     switch.write("channel.open(1001)")
     switch.write("waitcomplete()")
-    print("   ✓ Channel 1001 opened (you should hear 1 click)")
+    print("   [OK] Channel 1001 opened (you should hear 1 click)")
     
     switch.close()
 except Exception as e:
-    print(f"   ✗ ERROR: {e}")
+    print(f"   [FAIL] ERROR: {e}")
 
 # Test 3: Connect to current source (6221)
 print("\n3. Testing Current Source (GPIB0::12::INSTR)...")
@@ -57,14 +57,14 @@ try:
     current = rm.open_resource("GPIB0::12::INSTR")
     current.timeout = 5000
     idn = current.query("*IDN?").strip()
-    print(f"   ✓ Connected: {idn}")
+    print(f"   [OK] Connected: {idn}")
     
     # Don't actually turn on output for safety
-    print("   ✓ Communication OK (not enabling output for safety)")
+    print("   [OK] Communication OK (not enabling output for safety)")
     
     current.close()
 except Exception as e:
-    print(f"   ✗ ERROR: {e}")
+    print(f"   [FAIL] ERROR: {e}")
 
 # Test 4: Connect to picoammeter/voltage source (6487)
 print("\n4. Testing Picoammeter/Voltage Source (GPIB0::22::INSTR)...")
@@ -77,7 +77,7 @@ try:
     time.sleep(0.2)
     
     idn = voltmeter.query("*IDN?").strip()
-    print(f"   ✓ Connected: {idn}")
+    print(f"   [OK] Connected: {idn}")
     
     # Test voltage measurement
     voltmeter.write("FORM:ELEM READ")
@@ -90,13 +90,13 @@ try:
     print("   Taking a test voltage reading...")
     try:
         v = voltmeter.query("READ?")
-        print(f"   ✓ Voltage reading: {v.strip()} V")
+        print(f"   [OK] Voltage reading: {v.strip()} V")
     except Exception as e:
-        print(f"   ✗ Read failed: {e}")
+        print(f"   [FAIL] Read failed: {e}")
     
     voltmeter.close()
 except Exception as e:
-    print(f"   ✗ ERROR: {e}")
+    print(f"   [FAIL] ERROR: {e}")
 
 print("\n" + "=" * 60)
 print("DIAGNOSTIC TEST COMPLETE")
