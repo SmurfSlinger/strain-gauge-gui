@@ -500,6 +500,7 @@ class MainWindow(QMainWindow):
         # Column headers with units
         self._csv_writer.writerow([
             "Time (s)",
+            "Case",
             "Current (A)", 
             "Voltage (V)",
             "Resistance (Ohm)",
@@ -513,9 +514,17 @@ class MainWindow(QMainWindow):
     def _write_csv(self, s: Sample) -> None:
         if not self._csv_writer:
             return
+        
+        # Get current case name if multiplexing
+        case_name = ""
+        if self.multiplex_panel:
+            case = self.multiplex_panel.get_current_case()
+            case_name = case.name if case else ""
+        
         # Format numbers to be more readable (6 significant figures)
         self._csv_writer.writerow([
             f"{s.t_seconds:.6f}",
+            case_name,
             f"{s.current_amps:.6e}",
             f"{s.voltage_v:.6e}",
             f"{s.resistance_ohms:.6e}",

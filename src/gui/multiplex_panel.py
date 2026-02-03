@@ -37,10 +37,22 @@ class MultiplexPanel(QGroupBox):
         case_row.addWidget(QLabel("Case:"))
         self.cmb_case = QComboBox()
         for case in measurement_cases:
-            self.cmb_case.addItem(case.name)
+            # Show both name and channels in dropdown
+            display_text = f"{case.name} (Ch {case.force_channel_pos}/{case.force_channel_neg})"
+            self.cmb_case.addItem(display_text)
         self.cmb_case.currentIndexChanged.connect(self._on_case_changed)
         case_row.addWidget(self.cmb_case, 1)
         layout.addLayout(case_row)
+        
+        # Show current channels
+        channels_label = QLabel()
+        channels_label.setWordWrap(True)
+        channels_label.setStyleSheet("QLabel { color: #666; font-size: 9pt; }")
+        if measurement_cases:
+            first_case = measurement_cases[0]
+            channels_label.setText(f"Force+: {first_case.force_channel_pos}, Force-: {first_case.force_channel_neg}")
+        self.lbl_channels = channels_label
+        layout.addWidget(self.lbl_channels)
         
         # Enable multiplexing checkbox
         self.chk_enable = QCheckBox("Enable Multiplexing")
@@ -94,7 +106,9 @@ class MultiplexPanel(QGroupBox):
             return
         self._current_case_idx = idx
         self._readings_count = 0
-        self.lbl_current_case.setText(self._cases[idx].name)
+        case = self._cases[idx]
+        self.lbl_current_case.setText(case.name)
+        self.lbl_channels.setText(f"Force+: {case.force_channel_pos}, Force-: {case.force_channel_neg}")
         self.lbl_reading_count.setText("0")
         self.case_changed.emit(idx)
     
@@ -151,5 +165,7 @@ class MultiplexPanel(QGroupBox):
             return
         next_idx = (self._current_case_idx + 1) % len(self._cases)
         self._current_case_idx = next_idx
-        self.lbl_current_case.setText(self._cases[next_idx].name)
+        case = self._cases[next_idx]
+        self.lbl_current_case.setText(case.name)
+        self.lbl_channels.setText(f"Force+: {case.force_channel_pos}, Force-: {case.force_channel_neg}")
         self.reset_reading_count()
