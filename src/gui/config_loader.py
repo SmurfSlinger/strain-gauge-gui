@@ -36,22 +36,17 @@ class GuiConfig:
 
 
 
-def load_config(config_path: str | Path) -> GuiConfig:
-    p = Path(config_path)
-    data: dict[str, Any] = json.loads(p.read_text(encoding="utf-8"))
+def load_config(path: Path) -> GuiConfig:
+    raw = json.loads(path.read_text())
 
     return GuiConfig(
-        mode=str(data.get("mode", "mock")).lower(),
-        sample_interval_ms=int(data.get("sample_interval_ms", 250)),
-        switch=VisaDeviceCfg(resource_name=data["switch"]["resource_name"]),
-        current_source=VisaDeviceCfg(resource_name=data["current_source"]["resource_name"]),
-        voltmeter=VisaDeviceCfg(resource_name=data["voltmeter"]["resource_name"]),
-        default_experiment=ExperimentDefaults(
-            force_channel_pos=int(data["default_experiment"]["force_channel_pos"]),
-            force_channel_neg=int(data["default_experiment"]["force_channel_neg"]),
-            current_amps=float(data["default_experiment"]["current_amps"]),
-        ),
-        paths=GuiPaths(
-            default_working_directory=str(data.get("paths", {}).get("default_working_directory", "")),
-        ),
+        mode=raw["mode"],
+        sample_interval_ms=raw["sample_interval_ms"],
+        switch=VisaDeviceCfg(**raw["switch"]),
+        current_source=VisaDeviceCfg(**raw["current_source"]),
+        voltmeter=VisaDeviceCfg(**raw["voltmeter"]),
+        allowed_switch_channels=raw["allowed_switch_channels"],
+        default_experiment=ExperimentDefaults(**raw["default_experiment"]),
+        paths=GuiPaths(**raw["paths"]),
     )
+

@@ -1,17 +1,24 @@
 import pyvisa
 
 rm = pyvisa.ResourceManager(r"C:\Windows\System32\visa64.dll")
-sw = rm.open_resource("GPIB0::16::INSTR")
+inst = rm.open_resource("GPIB0::16::INSTR")
+inst.timeout = 5000
 
-sw.write('channel.close("1002")')
-sw.write("waitcomplete()")
+print(inst.query("print(slot[2].installed)"))
+print(inst.query("print(slot[3].installed)"))
 
-state = sw.query("print(channel.getstate('1002'))")
-print("Channel 1002 State:", state)
 
-for i in range(1,7):
-    print(f"Slot {i}:",
-          sw.query(f"print(slot[{i}].model)"),
-          sw.query(f"print(slot[{i}].description)"))
 
-sw.write("print(errorqueue.next())")
+
+
+
+
+
+
+
+
+
+
+
+
+

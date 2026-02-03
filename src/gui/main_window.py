@@ -249,6 +249,7 @@ class MainWindow(QMainWindow):
 
     def _on_connect(self):
         if self._cfg.mode != "real":
+            self._connected = True
             self.lbl_conn_status.setText("Mock mode (connected)")
             return
 
@@ -257,44 +258,57 @@ class MainWindow(QMainWindow):
             idn_current = self._current_source.connect()
             idn_meter = self._voltmeter.connect()
 
-            msg = (
-                f"Connected:\n"
-                f"{idn_switch}\n"
-                f"{idn_current}\n"
-                f"{idn_meter}"
-            )
+            self._connected = True
+
+            msg = f"Connected:\n{idn_switch}\n{idn_current}\n{idn_meter}"
 
             self.lbl_conn_status.setText("Connected")
             self.statusBar().showMessage("Instruments connected")
-
             QMessageBox.information(self, "Connection Successful", msg)
 
         except Exception as e:
+            self._connected = False
             self.lbl_conn_status.setText("Connection FAILED")
             QMessageBox.critical(self, "Connection Error", str(e))
 
     def _on_disconnect(self) -> None:
         try:
-            # Safe even in mock mode if methods exist
+            self._connected = False
+
             if hasattr(self._voltmeter, "disconnect"):
                 self._voltmeter.disconnect()
             if hasattr(self._current_source, "disconnect"):
                 self._current_source.disconnect()
             if hasattr(self._switch, "disconnect"):
                 self._switch.disconnect()
+
+            self.lbl_conn_status.setText("Disconnected")
             self.statusBar().showMessage("Disconnected")
         except Exception as e:
             QMessageBox.critical(self, "Disconnect Error", str(e))
 
     def _on_record(self) -> None:
+        if self._thread is not None:
+            QMessageBox.warning(
+                self,
+                "Busy",
+                "Previous acquisition is still stopping. Please wait a moment."
+            )
+            return
+
         if self._thread and self._thread.isRunning():
             QMessageBox.information(self, "Already Running", "Acquisition is already running.")
+            return
+
+        if self._cfg.mode == "real" and not self._connected:
+            QMessageBox.warning(self, "Not Connected", "Click 'Connect Instruments' first.")
             return
 
         workdir = self.txt_workdir.text().strip()
         if not workdir:
             QMessageBox.warning(self, "Working Directory", "Set a working directory first.")
             return
+
 
         out_path = QFileDialog.getSaveFileName(
             self,
@@ -305,30 +319,54 @@ class MainWindow(QMainWindow):
         if not out_path:
             return
 
+        ch_pos = int(self.spin_ch_pos.value())
+        ch_neg = int(self.spin_ch_neg.value())
+
+        try:
+            self._switch.close_channel(ch_pos)
+            if ch_neg != ch_pos:
+                self._switch.close_channel(ch_neg)
+        except Exception as e:
+            QMessageBox.critical(self, "Switch Error", str(e))
+            return
+
+        # Only after switch is confirmed: open CSV
         try:
             self._start_csv(out_path)
         except Exception as e:
+            # If CSV fails, revert switch state
+            try:
+                self._switch.open_channel(ch_pos)
+                if ch_neg != ch_pos:
+                    self._switch.open_channel(ch_neg)
+            except Exception:
+                pass
+
             QMessageBox.critical(self, "File Error", f"Could not open CSV:\n{e}")
             return
 
         self._recording = True
 
+        # ONLY NOW start the acquisition thread
         self._thread = AcquisitionThread(
             controller=self._controller,
-            force_ch_pos=self.spin_ch_pos.value(),
-            force_ch_neg=self.spin_ch_neg.value(),
+            force_ch_pos=ch_pos,
+            force_ch_neg=ch_neg,
             current_amps=self.spin_current.value(),
             interval_ms=self.spin_interval.value(),
         )
+
         self._thread.sample_ready.connect(self._on_sample)
         self._thread.status.connect(lambda s: self.statusBar().showMessage(s))
         self._thread.error.connect(self._on_error)
+        self._thread.finished.connect(self._on_thread_finished)
 
         self._thread.start()
 
-    def _on_stop(self) -> None:
+    def _on_stop(self):
         if self._thread:
             self._thread.stop()
+            self._controller.stop_outputs()
             self._thread.wait(2000)
             self._thread = None
 
@@ -338,6 +376,10 @@ class MainWindow(QMainWindow):
 
     def _on_reset(self) -> None:
         self.plot.clear()
+
+    def _on_thread_finished(self):
+        self._thread = None
+        self.statusBar().showMessage("Stopped")
 
     def _on_error(self, msg: str) -> None:
         self._on_stop()
