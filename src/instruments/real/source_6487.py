@@ -18,13 +18,17 @@ class Source6487(BaseInstrument):
         idn = super().connect()
         
         if not self._configured:
+            # Clear errors first, before any configuration
+            self.write("*CLS")
+            
             # Configure for DC voltage measurement
-            self.write("*RST")  # Reset to known state
-            self.write("*CLS")  # Clear errors
             self.write("CONF:VOLT:DC")  # Configure for DC voltage
             self.write("VOLT:RANG:AUTO ON")  # Auto-ranging
             self.write("VOLT:NPLC 1")  # Fast integration
             self.write("FORM:ELEM READ")  # Simple reading format
+            
+            # Clear any errors from configuration
+            self.write("*CLS")
             self._configured = True
         
         return idn
