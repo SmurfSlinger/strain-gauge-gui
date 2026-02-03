@@ -29,11 +29,11 @@ for ch in range(1001, 1021):
     err = sw.query("print(errorqueue.next())").strip()
     if "Queue Is Empty" in err or err.startswith("0"):
         valid_channels.append(ch)
-        print(f"  {ch}: ✓ Valid")
+        print(f"  {ch}: [VALID]")
         # Open it again
         sw.write(f'channel.open("{ch}")')
     else:
-        print(f"  {ch}: ✗ Invalid ({err[:40]}...)")
+        print(f"  {ch}: [INVALID] {err[:40]}...")
 
 # Test Bank 2: 1021-1040
 print("\nBank 2 (1021-1040):")
@@ -45,11 +45,11 @@ for ch in range(1021, 1041):
     err = sw.query("print(errorqueue.next())").strip()
     if "Queue Is Empty" in err or err.startswith("0"):
         valid_channels.append(ch)
-        print(f"  {ch}: ✓ Valid")
+        print(f"  {ch}: [VALID]")
         # Open it again
         sw.write(f'channel.open("{ch}")')
     else:
-        print(f"  {ch}: ✗ Invalid ({err[:40]}...)")
+        print(f"  {ch}: [INVALID] {err[:40]}...")
 
 print("\n" + "=" * 60)
 print(f"Found {len(valid_channels)} valid channels:")
