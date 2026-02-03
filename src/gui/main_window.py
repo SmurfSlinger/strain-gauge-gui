@@ -387,11 +387,21 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Working Directory", "Set a working directory first.")
             return
 
+        # Generate smart filename that doesn't overwrite existing files
+        workdir_path = Path(workdir)
+        base_name = "data"
+        counter = 1
+        
+        # Find next available filename (data.csv, data_001.csv, data_002.csv, etc.)
+        suggested_path = workdir_path / f"{base_name}.csv"
+        while suggested_path.exists():
+            suggested_path = workdir_path / f"{base_name}_{counter:03d}.csv"
+            counter += 1
 
         out_path = QFileDialog.getSaveFileName(
             self,
             "Select Output CSV",
-            str(Path(workdir) / "data.csv"),
+            str(suggested_path),
             "CSV Files (*.csv)"
         )[0]
         if not out_path:
