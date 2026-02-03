@@ -21,6 +21,7 @@ class MultiplexPanel(QGroupBox):
     case_changed = Signal(int)  # Emits index of selected case
     multiplex_toggled = Signal(bool)  # Emits True when multiplexing enabled
     auto_cycle_toggled = Signal(bool)  # Emits True when auto-cycle enabled
+    switch_requested = Signal()  # Emits when user clicks "Switch to Next Case" button
     
     def __init__(self, measurement_cases, parent=None):
         super().__init__("Multiplexing", parent)
@@ -115,8 +116,8 @@ class MultiplexPanel(QGroupBox):
         """Manually advance to the next case."""
         if len(self._cases) <= 1:
             return
-        next_idx = (self._current_case_idx + 1) % len(self._cases)
-        self.cmb_case.setCurrentIndex(next_idx)
+        # Emit signal to request the switch (main window will handle hardware)
+        self.switch_requested.emit()
     
     def increment_reading_count(self):
         """Called by main window each time a sample is taken."""
@@ -134,6 +135,10 @@ class MultiplexPanel(QGroupBox):
             return self._cases[self._current_case_idx]
         return None
     
+    def is_multiplexing_enabled(self):
+        """Returns True if multiplexing is currently enabled."""
+        return self.chk_enable.isChecked()
+    
     def should_auto_advance(self):
         """Returns True if auto mode is on and enough readings have been taken."""
         if not self.chk_auto.isChecked():
@@ -142,4 +147,9 @@ class MultiplexPanel(QGroupBox):
     
     def auto_advance_case(self):
         """Automatically advance to the next case (used in auto mode)."""
-        self._on_next_case()
+        if len(self._cases) <= 1:
+            return
+        next_idx = (self._current_case_idx + 1) % len(self._cases)
+        self._current_case_idx = next_idx
+        self.lbl_current_case.setText(self._cases[next_idx].name)
+        self.reset_reading_count()
