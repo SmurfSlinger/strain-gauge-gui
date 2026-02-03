@@ -13,7 +13,9 @@ class Source6487(BaseInstrument):
         self.gpib_addr = gpib_addr or self.DEFAULT_GPIB_ADDR
 
     def measure_voltage(self) -> float:
-        return float(self.query("MEAS:VOLT?").strip())
+        # 6487 uses READ? to get a reading (returns voltage in picoammeter mode)
+        return float(self.query("READ?").strip())
 
     def measure_current(self) -> float:
-        return float(self.query("MEAS:CURR?").strip())
+        # 6487 uses READ? to get a reading
+        return float(self.query("READ?").strip())
