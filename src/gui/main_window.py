@@ -426,33 +426,14 @@ class MainWindow(QMainWindow):
         ch_pos = int(self.spin_ch_pos.value())
         ch_neg = int(self.spin_ch_neg.value())
 
-        # Get current case to determine all channels that need to be closed
-        # (includes sense channels for 4-wire measurements)
-        channels_to_close = [ch_pos, ch_neg]
-        if self.multiplex_panel:
-            case = self.multiplex_panel.get_current_case()
-            if case and case.is_4_wire():
-                channels_to_close = case.get_all_channels()
+        # NOTE: Don't manually close channels here!
+        # The acquisition thread's begin_constant_current_mode() will handle
+        # opening all channels and closing the correct ones (including sense channels for 4-wire)
 
-        try:
-            for ch in channels_to_close:
-                self._switch.close_channel(ch)
-        except Exception as e:
-            QMessageBox.critical(self, "Switch Error", str(e))
-            return
-
-        # Only after switch is confirmed: open CSV
+        # Open CSV file before starting acquisition
         try:
             self._start_csv(out_path)
         except Exception as e:
-            # If CSV fails, revert switch state
-            try:
-                self._switch.open_channel(ch_pos)
-                if ch_neg != ch_pos:
-                    self._switch.open_channel(ch_neg)
-            except Exception:
-                pass
-
             QMessageBox.critical(self, "File Error", f"Could not open CSV:\n{e}")
             return
 
