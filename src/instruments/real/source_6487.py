@@ -11,6 +11,23 @@ class Source6487(BaseInstrument):
     def __init__(self, cfg: VisaDeviceCfg, gpib_addr: int | None = None):
         super().__init__(cfg, name="Source6487")
         self.gpib_addr = gpib_addr or self.DEFAULT_GPIB_ADDR
+        self._configured = False
+
+    def connect(self) -> str:
+        """Connect and configure the instrument for voltage measurements."""
+        idn = super().connect()
+        
+        if not self._configured:
+            # Configure for DC voltage measurement
+            self.write("*RST")  # Reset to known state
+            self.write("*CLS")  # Clear errors
+            self.write("CONF:VOLT:DC")  # Configure for DC voltage
+            self.write("VOLT:RANG:AUTO ON")  # Auto-ranging
+            self.write("VOLT:NPLC 1")  # Fast integration
+            self.write("FORM:ELEM READ")  # Simple reading format
+            self._configured = True
+        
+        return idn
 
     def measure_voltage(self) -> float:
         # 6487 uses READ? to get a reading (returns voltage in picoammeter mode)
