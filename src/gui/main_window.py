@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 from src.gui.acquisition import AcquisitionThread, Sample
 from src.gui.mpl_canvas import MplPlotCanvas
 from src.gui.multiplex_panel import MultiplexPanel
+from src.gui.help_dialog import HelpDialog
 
 
 class MainWindow(QMainWindow):
@@ -38,6 +39,12 @@ class MainWindow(QMainWindow):
         self._cfg = cfg
 
         self.setWindowTitle("DAQ / Resistance Acquisition")
+
+        # Create menu bar
+        menubar = self.menuBar()
+        help_menu = menubar.addMenu("&Help")
+        help_action = help_menu.addAction("&User Guide")
+        help_action.triggered.connect(self._on_show_help)
 
         self._thread: Optional[AcquisitionThread] = None
         self._recording = False
@@ -245,6 +252,11 @@ class MainWindow(QMainWindow):
             if case:
                 self.spin_ch_pos.setValue(case.force_channel_pos)
                 self.spin_ch_neg.setValue(case.force_channel_neg)
+
+    def _on_show_help(self):
+        """Show the help dialog."""
+        dialog = HelpDialog(self)
+        dialog.exec()
                 
     def _on_connect(self):
         if self._cfg.mode != "real":
