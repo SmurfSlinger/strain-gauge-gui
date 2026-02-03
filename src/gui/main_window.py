@@ -439,6 +439,12 @@ class MainWindow(QMainWindow):
 
         self._recording = True
         
+        # CRITICAL: Clear plots before starting new recording
+        # This prevents slowdown from accumulating old data
+        self.plot_single.clear()
+        self.plot_multi.clear()
+        self._last_plot_update = 0.0  # Reset throttle timer
+        
         # Switch to appropriate plot canvas based on multiplexing
         if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
             # Use multi-gauge canvas when multiplexing
