@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 
 from src.gui.acquisition import AcquisitionThread, Sample
 from src.gui.mpl_canvas import MplPlotCanvas
+from src.gui.multiplex_panel import MultiplexPanel
 
 
 class MainWindow(QMainWindow):
