@@ -416,15 +416,46 @@ class MainWindow(QMainWindow):
     # CSV
     # -------------------------
     def _start_csv(self, path: str) -> None:
+        from datetime import datetime
+        
         self._csv_fp = open(path, "w", newline="", encoding="utf-8")
         self._csv_writer = csv.writer(self._csv_fp)
-        self._csv_writer.writerow(["t_s", "current_A", "voltage_V", "resistance_ohm", "load_lbs", "extension_in", "strain1", "strain2"])
+        
+        # Write metadata header
+        self._csv_writer.writerow(["# Strain Gauge Data Acquisition"])
+        self._csv_writer.writerow([f"# Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"])
+        self._csv_writer.writerow([f"# Current: {self.spin_current.value()} A"])
+        self._csv_writer.writerow([f"# Channels: +{self.spin_ch_pos.value()}, -{self.spin_ch_neg.value()}"])
+        self._csv_writer.writerow([f"# Sample Interval: {self.spin_interval.value()} ms"])
+        self._csv_writer.writerow([""])  # Blank line
+        
+        # Column headers with units
+        self._csv_writer.writerow([
+            "Time (s)",
+            "Current (A)", 
+            "Voltage (V)",
+            "Resistance (Ohm)",
+            "Load (lbs)",
+            "Extension (in)",
+            "Strain 1",
+            "Strain 2"
+        ])
         self._csv_fp.flush()
 
     def _write_csv(self, s: Sample) -> None:
         if not self._csv_writer:
             return
-        self._csv_writer.writerow([s.t_seconds, s.current_amps, s.voltage_v, s.resistance_ohms, s.load_lbs, s.extension_in, s.strain_1, s.strain_2])
+        # Format numbers to be more readable (6 significant figures)
+        self._csv_writer.writerow([
+            f"{s.t_seconds:.6f}",
+            f"{s.current_amps:.6e}",
+            f"{s.voltage_v:.6e}",
+            f"{s.resistance_ohms:.6f}",
+            f"{s.load_lbs:.6f}",
+            f"{s.extension_in:.6f}",
+            f"{s.strain_1:.6e}",
+            f"{s.strain_2:.6e}"
+        ])
         if self._csv_fp:
             self._csv_fp.flush()
 
