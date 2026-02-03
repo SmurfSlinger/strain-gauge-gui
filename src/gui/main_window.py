@@ -285,30 +285,27 @@ class MainWindow(QMainWindow):
             self.spin_ch_neg.setValue(new_neg)
             
             # Reconfigure hardware:
-            # 1. Stop current source output
-            self._controller.stop_outputs()
+            # IMPORTANT: Don't call stop_outputs() - keep current source running!
+            # Just switch the relay channels while current is still flowing
             
-            # 2. Open old channels
+            # 1. Open old channels
             self._switch.open_channel(old_pos)
             if old_neg != old_pos:
                 self._switch.open_channel(old_neg)
             
-            # 3. Close new channels
+            # 2. Close new channels
             self._switch.close_channel(new_pos)
             if new_neg != new_pos:
                 self._switch.close_channel(new_neg)
             
-            # 4. Restart current source with new channels
-            self._controller.begin_constant_current_mode(
-                ch_pos=new_pos,
-                ch_neg=new_neg,
-                current_amps=self.spin_current.value(),
-            )
+            # Current source stays on - controller remains armed
+            # Next take_sample() will measure the new gauge
             
             self.statusBar().showMessage(f"Switched to {case.name}")
             
         except Exception as e:
-            self.error.emit(f"Error switching cases: {e}")
+            QMessageBox.critical(self, "Switch Error", f"Error switching cases: {e}")
+            self._on_stop()  # Stop everything if switching fails
                 
     def _on_connect(self):
         if self._cfg.mode != "real":
