@@ -12,13 +12,8 @@ class Source6487(BaseInstrument):
         super().__init__(cfg, name="Source6487")
         self.gpib_addr = gpib_addr or self.DEFAULT_GPIB_ADDR
 
-    def _select_addr(self):
-        self.write(f"++addr {self.gpib_addr}")
-
     def measure_voltage(self) -> float:
-        self._select_addr()
         return float(self.query("MEAS:VOLT?").strip())
 
     def measure_current(self) -> float:
-        self._select_addr()
         return float(self.query("MEAS:CURR?").strip())
