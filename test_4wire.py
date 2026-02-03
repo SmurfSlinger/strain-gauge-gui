@@ -19,14 +19,17 @@ for i, case in enumerate(cfg.measurement_cases, 1):
     
     if case.is_4_wire():
         print(f"   Sense Channels: {case.sense_channel_pos} / {case.sense_channel_neg}")
-        print(f"   ✓ 4-wire mode - closes 4 channels total")
+        print(f"   [OK] 4-wire mode - closes 4 channels total")
         all_channels = case.get_all_channels()
         print(f"   All channels: {all_channels}")
     else:
-        print(f"   ✓ 2-wire mode - closes 2 channels total")
+        print(f"   [OK] 2-wire mode - closes 2 channels total")
         all_channels = case.get_all_channels()
         print(f"   All channels: {all_channels}")
 
 print("\n" + "=" * 60)
 print("CONFIGURATION TEST PASSED!")
 print("=" * 60)
+print(f"\nTotal gauges configured: {len(cfg.measurement_cases)}")
+print(f"2-wire gauges: {sum(1 for c in cfg.measurement_cases if not c.is_4_wire())}")
+print(f"4-wire gauges: {sum(1 for c in cfg.measurement_cases if c.is_4_wire())}")
