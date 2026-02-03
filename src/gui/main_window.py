@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 
 from src.gui.acquisition import AcquisitionThread, Sample
 from src.gui.mpl_canvas import MplPlotCanvas
+from src.gui.mpl_multi_canvas import MplMultiGaugeCanvas
 from src.gui.multiplex_panel import MultiplexPanel
 from src.gui.help_dialog import HelpDialog
 
@@ -136,8 +137,16 @@ class MainWindow(QMainWindow):
 
         center.addLayout(top)
 
-        self.plot = MplPlotCanvas()
-        center.addWidget(self.plot, 1)
+        # Create both single and multi-gauge canvases
+        # Switch between them based on multiplexing mode
+        self.plot_single = MplPlotCanvas()
+        self.plot_multi = MplMultiGaugeCanvas()
+        
+        # Start with single-gauge plot visible
+        self.plot = self.plot_single
+        center.addWidget(self.plot_single, 1)
+        center.addWidget(self.plot_multi, 1)
+        self.plot_multi.hide()  # Hide multi-gauge plot initially
 
         # Bottom controls row
         bottom = QHBoxLayout()
@@ -233,13 +242,18 @@ class MainWindow(QMainWindow):
     # -------------------------
     def _on_plot_changed(self) -> None:
         idx = self.cmb_plot.currentIndex()
+        ylabel = ""
         if idx == 0:
-            self.plot.set_ylabel("Resistance (Ω)")
+            ylabel = "Resistance (Ω)"
         elif idx == 1:
-            self.plot.set_ylabel("Voltage (V)")
+            ylabel = "Voltage (V)"
         else:
-            self.plot.set_ylabel("Current (A)")
-        self.plot.clear()
+            ylabel = "Current (A)"
+        
+        self.plot_single.set_ylabel(ylabel)
+        self.plot_multi.set_ylabel(ylabel)
+        self.plot_single.clear()
+        self.plot_multi.clear()
 
     def _on_browse_dir(self) -> None:
         d = QFileDialog.getExistingDirectory(self, "Select Working Directory")
@@ -406,6 +420,18 @@ class MainWindow(QMainWindow):
             return
 
         self._recording = True
+        
+        # Switch to appropriate plot canvas based on multiplexing
+        if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
+            # Use multi-gauge canvas when multiplexing
+            self.plot_single.hide()
+            self.plot_multi.show()
+            self.plot = self.plot_multi
+        else:
+            # Use single-gauge canvas when not multiplexing
+            self.plot_multi.hide()
+            self.plot_single.show()
+            self.plot = self.plot_single
 
         # ONLY NOW start the acquisition thread
         self._thread = AcquisitionThread(
@@ -435,7 +461,8 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Stopped")
 
     def _on_reset(self) -> None:
-        self.plot.clear()
+        self.plot_single.clear()
+        self.plot_multi.clear()
 
     def _on_thread_finished(self):
         self._thread = None
@@ -466,7 +493,15 @@ class MainWindow(QMainWindow):
         else:
             y = sample.current_amps
 
-        self.plot.append_point(sample.t_seconds, y)
+        # Plot to the appropriate canvas
+        if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
+            # Multi-gauge mode: include case name for color-coded plotting
+            case = self.multiplex_panel.get_current_case()
+            case_name = case.name if case else "Unknown"
+            self.plot_multi.append_point(sample.t_seconds, y, case_name)
+        else:
+            # Single-gauge mode: just plot the point
+            self.plot_single.append_point(sample.t_seconds, y)
 
         # CSV record
         if self._recording:
