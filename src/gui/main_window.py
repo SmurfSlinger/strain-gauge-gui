@@ -489,13 +489,13 @@ class MainWindow(QMainWindow):
         self._csv_fp = open(path, "w", newline="", encoding="utf-8")
         self._csv_writer = csv.writer(self._csv_fp)
         
-        # Write metadata header
-        self._csv_writer.writerow(["# Strain Gauge Data Acquisition"])
-        self._csv_writer.writerow([f"# Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"])
-        self._csv_writer.writerow([f"# Current: {self.spin_current.value()} A"])
-        self._csv_writer.writerow([f"# Channels: +{self.spin_ch_pos.value()}, -{self.spin_ch_neg.value()}"])
-        self._csv_writer.writerow([f"# Sample Interval: {self.spin_interval.value()} ms"])
-        self._csv_writer.writerow([""])  # Blank line
+        # Write metadata header (write as plain text, not CSV rows)
+        self._csv_fp.write("# Strain Gauge Data Acquisition\n")
+        self._csv_fp.write(f"# Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        self._csv_fp.write(f"# Current: {self.spin_current.value()} A\n")
+        self._csv_fp.write(f"# Channels: +{self.spin_ch_pos.value()}, -{self.spin_ch_neg.value()}\n")
+        self._csv_fp.write(f"# Sample Interval: {self.spin_interval.value()} ms\n")
+        self._csv_fp.write("\n")  # Blank line
         
         # Column headers with units
         self._csv_writer.writerow([
