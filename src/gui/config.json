@@ -13,75 +13,171 @@
   ],
 
   "default_experiment": {
-    "force_channel_pos": 1002,
-    "force_channel_neg": 1002,
+    "force_channel_pos": 1001,
+    "force_channel_neg": 1021,
     "current_amps": 0.001
   },
 
   "measurement_cases": [
     {
-      "name": "Top Left",
-      "wire_mode": "2-wire",
+      "name": "Sample 1",
+      "wire_mode": "4-wire",
       "force_channel_pos": 1001,
-      "force_channel_neg": 1002,
-      "sense_channel_pos": null,
-      "sense_channel_neg": null
+      "force_channel_neg": 1021,
+      "sense_channel_pos": 1001,
+      "sense_channel_neg": 1021
     },
     {
-      "name": "Top Right",
-      "wire_mode": "2-wire",
+      "name": "Sample 2",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1002,
+      "force_channel_neg": 1022,
+      "sense_channel_pos": 1002,
+      "sense_channel_neg": 1022
+    },
+    {
+      "name": "Sample 3",
+      "wire_mode": "4-wire",
       "force_channel_pos": 1003,
-      "force_channel_neg": 1004,
-      "sense_channel_pos": null,
-      "sense_channel_neg": null
+      "force_channel_neg": 1023,
+      "sense_channel_pos": 1003,
+      "sense_channel_neg": 1023
     },
     {
-      "name": "Bottom Left",
-      "wire_mode": "2-wire",
+      "name": "Sample 4",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1004,
+      "force_channel_neg": 1024,
+      "sense_channel_pos": 1004,
+      "sense_channel_neg": 1024
+    },
+    {
+      "name": "Sample 5",
+      "wire_mode": "4-wire",
       "force_channel_pos": 1005,
-      "force_channel_neg": 1006,
-      "sense_channel_pos": null,
-      "sense_channel_neg": null
+      "force_channel_neg": 1025,
+      "sense_channel_pos": 1005,
+      "sense_channel_neg": 1025
     },
     {
-      "name": "Bottom Right",
-      "wire_mode": "2-wire",
+      "name": "Sample 6",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1006,
+      "force_channel_neg": 1026,
+      "sense_channel_pos": 1006,
+      "sense_channel_neg": 1026
+    },
+    {
+      "name": "Sample 7",
+      "wire_mode": "4-wire",
       "force_channel_pos": 1007,
-      "force_channel_neg": 1008,
-      "sense_channel_pos": null,
-      "sense_channel_neg": null
+      "force_channel_neg": 1027,
+      "sense_channel_pos": 1007,
+      "sense_channel_neg": 1027
     },
     {
-      "name": "Precision 1",
+      "name": "Sample 8",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1008,
+      "force_channel_neg": 1028,
+      "sense_channel_pos": 1008,
+      "sense_channel_neg": 1028
+    },
+    {
+      "name": "Sample 9",
       "wire_mode": "4-wire",
       "force_channel_pos": 1009,
-      "force_channel_neg": 1010,
-      "sense_channel_pos": 1011,
-      "sense_channel_neg": 1012
+      "force_channel_neg": 1029,
+      "sense_channel_pos": 1009,
+      "sense_channel_neg": 1029
     },
     {
-      "name": "Precision 2",
+      "name": "Sample 10",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1010,
+      "force_channel_neg": 1030,
+      "sense_channel_pos": 1010,
+      "sense_channel_neg": 1030
+    },
+    {
+      "name": "Sample 11",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1011,
+      "force_channel_neg": 1031,
+      "sense_channel_pos": 1011,
+      "sense_channel_neg": 1031
+    },
+    {
+      "name": "Sample 12",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1012,
+      "force_channel_neg": 1032,
+      "sense_channel_pos": 1012,
+      "sense_channel_neg": 1032
+    },
+    {
+      "name": "Sample 13",
       "wire_mode": "4-wire",
       "force_channel_pos": 1013,
-      "force_channel_neg": 1014,
-      "sense_channel_pos": 1015,
-      "sense_channel_neg": 1016
+      "force_channel_neg": 1033,
+      "sense_channel_pos": 1013,
+      "sense_channel_neg": 1033
     },
     {
-      "name": "Precision 3",
+      "name": "Sample 14",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1014,
+      "force_channel_neg": 1034,
+      "sense_channel_pos": 1014,
+      "sense_channel_neg": 1034
+    },
+    {
+      "name": "Sample 15",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1015,
+      "force_channel_neg": 1035,
+      "sense_channel_pos": 1015,
+      "sense_channel_neg": 1035
+    },
+    {
+      "name": "Sample 16",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1016,
+      "force_channel_neg": 1036,
+      "sense_channel_pos": 1016,
+      "sense_channel_neg": 1036
+    },
+    {
+      "name": "Sample 17",
       "wire_mode": "4-wire",
       "force_channel_pos": 1017,
-      "force_channel_neg": 1018,
-      "sense_channel_pos": 1019,
-      "sense_channel_neg": 1020
+      "force_channel_neg": 1037,
+      "sense_channel_pos": 1017,
+      "sense_channel_neg": 1037
     },
     {
-      "name": "Precision 4",
+      "name": "Sample 18",
       "wire_mode": "4-wire",
-      "force_channel_pos": 1021,
-      "force_channel_neg": 1022,
-      "sense_channel_pos": 1023,
-      "sense_channel_neg": 1024
+      "force_channel_pos": 1018,
+      "force_channel_neg": 1038,
+      "sense_channel_pos": 1018,
+      "sense_channel_neg": 1038
+    },
+    {
+      "name": "Sample 19",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1019,
+      "force_channel_neg": 1039,
+      "sense_channel_pos": 1019,
+      "sense_channel_neg": 1039
+    },
+    {
+      "name": "Sample 20",
+      "wire_mode": "4-wire",
+      "force_channel_pos": 1020,
+      "force_channel_neg": 1040,
+      "sense_channel_pos": 1020,
+      "sense_channel_neg": 1040
     }
   ],
 
