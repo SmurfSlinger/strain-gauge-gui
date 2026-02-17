@@ -20,164 +20,164 @@
 
   "measurement_cases": [
     {
-      "name": "Sample 1",
+      "name": "Sample 1 (1001/1021)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1001,
       "force_channel_neg": 1021,
-      "sense_channel_pos": 1001,
-      "sense_channel_neg": 1021
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 2",
+      "name": "Sample 2 (1002/1022)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1002,
       "force_channel_neg": 1022,
-      "sense_channel_pos": 1002,
-      "sense_channel_neg": 1022
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 3",
+      "name": "Sample 3 (1003/1023)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1003,
       "force_channel_neg": 1023,
-      "sense_channel_pos": 1003,
-      "sense_channel_neg": 1023
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 4",
+      "name": "Sample 4 (1004/1024)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1004,
       "force_channel_neg": 1024,
-      "sense_channel_pos": 1004,
-      "sense_channel_neg": 1024
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 5",
+      "name": "Sample 5 (1005/1025)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1005,
       "force_channel_neg": 1025,
-      "sense_channel_pos": 1005,
-      "sense_channel_neg": 1025
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 6",
+      "name": "Sample 6 (1006/1026)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1006,
       "force_channel_neg": 1026,
-      "sense_channel_pos": 1006,
-      "sense_channel_neg": 1026
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 7",
+      "name": "Sample 7 (1007/1027)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1007,
       "force_channel_neg": 1027,
-      "sense_channel_pos": 1007,
-      "sense_channel_neg": 1027
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 8",
+      "name": "Sample 8 (1008/1028)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1008,
       "force_channel_neg": 1028,
-      "sense_channel_pos": 1008,
-      "sense_channel_neg": 1028
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 9",
+      "name": "Sample 9 (1009/1029)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1009,
       "force_channel_neg": 1029,
-      "sense_channel_pos": 1009,
-      "sense_channel_neg": 1029
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 10",
+      "name": "Sample 10 (1010/1030)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1010,
       "force_channel_neg": 1030,
-      "sense_channel_pos": 1010,
-      "sense_channel_neg": 1030
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 11",
+      "name": "Sample 11 (1011/1031)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1011,
       "force_channel_neg": 1031,
-      "sense_channel_pos": 1011,
-      "sense_channel_neg": 1031
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 12",
+      "name": "Sample 12 (1012/1032)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1012,
       "force_channel_neg": 1032,
-      "sense_channel_pos": 1012,
-      "sense_channel_neg": 1032
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 13",
+      "name": "Sample 13 (1013/1033)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1013,
       "force_channel_neg": 1033,
-      "sense_channel_pos": 1013,
-      "sense_channel_neg": 1033
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 14",
+      "name": "Sample 14 (1014/1034)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1014,
       "force_channel_neg": 1034,
-      "sense_channel_pos": 1014,
-      "sense_channel_neg": 1034
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 15",
+      "name": "Sample 15 (1015/1035)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1015,
       "force_channel_neg": 1035,
-      "sense_channel_pos": 1015,
-      "sense_channel_neg": 1035
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 16",
+      "name": "Sample 16 (1016/1036)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1016,
       "force_channel_neg": 1036,
-      "sense_channel_pos": 1016,
-      "sense_channel_neg": 1036
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 17",
+      "name": "Sample 17 (1017/1037)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1017,
       "force_channel_neg": 1037,
-      "sense_channel_pos": 1017,
-      "sense_channel_neg": 1037
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 18",
+      "name": "Sample 18 (1018/1038)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1018,
       "force_channel_neg": 1038,
-      "sense_channel_pos": 1018,
-      "sense_channel_neg": 1038
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 19",
+      "name": "Sample 19 (1019/1039)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1019,
       "force_channel_neg": 1039,
-      "sense_channel_pos": 1019,
-      "sense_channel_neg": 1039
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     },
     {
-      "name": "Sample 20",
+      "name": "Sample 20 (1020/1040)",
       "wire_mode": "4-wire",
       "force_channel_pos": 1020,
       "force_channel_neg": 1040,
-      "sense_channel_pos": 1020,
-      "sense_channel_neg": 1040
+      "sense_channel_pos": null,
+      "sense_channel_neg": null
     }
   ],
 
