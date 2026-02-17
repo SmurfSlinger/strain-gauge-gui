@@ -75,10 +75,14 @@ class SettingsDialog(QDialog):
         self.gauge_table = QTableWidget()
         self.gauge_table.setColumnCount(7)
         self.gauge_table.setHorizontalHeaderLabels([
-            "Name", "Wire Mode", "Force Ch +", "Force Ch -", 
-            "Sense Ch +", "Sense Ch -", "Actions"
+            "Name", "Wire Mode", "Force Ch + (Bank 1)", "Force Ch - (Bank 2)", 
+            "Sense Ch + (auto)", "Sense Ch - (auto)", "Actions"
         ])
         self.gauge_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        
+        note = QLabel("Note: For external instruments, Sense channels automatically match Force channels.")
+        note.setStyleSheet("QLabel { color: #666; font-style: italic; }")
+        layout.addWidget(note)
         
         # Populate table with existing gauges
         self._populate_gauge_table()
@@ -126,47 +130,40 @@ class SettingsDialog(QDialog):
             wire_combo = QComboBox()
             wire_combo.addItems(["2-wire", "4-wire"])
             wire_combo.setCurrentText(case.get("wire_mode", "2-wire"))
-            wire_combo.currentTextChanged.connect(lambda text, r=row: self._on_wire_mode_changed(r, text))
             self.gauge_table.setCellWidget(row, 1, wire_combo)
             
-            # Force channels
+            # Sense channels (disabled - automatically match force channels for external instruments)
+            sense_pos = QSpinBox()
+            sense_pos.setRange(1001, 1040)
+            sense_pos.setValue(case["force_channel_pos"])
+            sense_pos.setEnabled(False)
+            sense_pos.setStyleSheet("QSpinBox:disabled { color: #888; }")
+            self.gauge_table.setCellWidget(row, 4, sense_pos)
+            
+            sense_neg = QSpinBox()
+            sense_neg.setRange(1001, 1040)
+            sense_neg.setValue(case["force_channel_neg"])
+            sense_neg.setEnabled(False)
+            sense_neg.setStyleSheet("QSpinBox:disabled { color: #888; }")
+            self.gauge_table.setCellWidget(row, 5, sense_neg)
+            
+            # Force channels (update sense channels when changed)
             force_pos = QSpinBox()
             force_pos.setRange(1001, 1040)
             force_pos.setValue(case["force_channel_pos"])
+            force_pos.valueChanged.connect(lambda val, r=row: self.gauge_table.cellWidget(r, 4).setValue(val))
             self.gauge_table.setCellWidget(row, 2, force_pos)
             
             force_neg = QSpinBox()
             force_neg.setRange(1001, 1040)
             force_neg.setValue(case["force_channel_neg"])
+            force_neg.valueChanged.connect(lambda val, r=row: self.gauge_table.cellWidget(r, 5).setValue(val))
             self.gauge_table.setCellWidget(row, 3, force_neg)
-            
-            # Sense channels
-            sense_pos = QSpinBox()
-            sense_pos.setRange(1001, 1040)
-            sense_pos.setValue(case.get("sense_channel_pos") or 1001)
-            sense_pos.setEnabled(case.get("wire_mode") == "4-wire")
-            self.gauge_table.setCellWidget(row, 4, sense_pos)
-            
-            sense_neg = QSpinBox()
-            sense_neg.setRange(1001, 1040)
-            sense_neg.setValue(case.get("sense_channel_neg") or 1002)
-            sense_neg.setEnabled(case.get("wire_mode") == "4-wire")
-            self.gauge_table.setCellWidget(row, 5, sense_neg)
             
             # Delete button
             btn_delete = QPushButton("Delete")
             btn_delete.clicked.connect(lambda checked, r=row: self._on_delete_gauge(r))
             self.gauge_table.setCellWidget(row, 6, btn_delete)
-    
-    def _on_wire_mode_changed(self, row, mode):
-        """Enable/disable sense channel spinboxes based on wire mode."""
-        is_4wire = (mode == "4-wire")
-        sense_pos = self.gauge_table.cellWidget(row, 4)
-        sense_neg = self.gauge_table.cellWidget(row, 5)
-        if sense_pos:
-            sense_pos.setEnabled(is_4wire)
-        if sense_neg:
-            sense_neg.setEnabled(is_4wire)
     
     def _on_add_gauge(self):
         """Add a new gauge row to the table."""
@@ -180,33 +177,39 @@ class SettingsDialog(QDialog):
         # Wire mode
         wire_combo = QComboBox()
         wire_combo.addItems(["2-wire", "4-wire"])
-        wire_combo.currentTextChanged.connect(lambda text, r=row: self._on_wire_mode_changed(r, text))
         self.gauge_table.setCellWidget(row, 1, wire_combo)
         
-        # Channels - suggest next available channels
-        next_ch = 1001 + (row * 2)
+        # Channels - cross-bank pairing (Bank 1 channel + Bank 2 channel)
+        bank1_ch = 1001 + row
+        bank2_ch = 1021 + row
         
-        force_pos = QSpinBox()
-        force_pos.setRange(1001, 1040)
-        force_pos.setValue(next_ch)
-        self.gauge_table.setCellWidget(row, 2, force_pos)
-        
-        force_neg = QSpinBox()
-        force_neg.setRange(1001, 1040)
-        force_neg.setValue(next_ch + 1)
-        self.gauge_table.setCellWidget(row, 3, force_neg)
-        
+        # Sense channels automatically match force channels
         sense_pos = QSpinBox()
         sense_pos.setRange(1001, 1040)
-        sense_pos.setValue(next_ch + 2)
+        sense_pos.setValue(bank1_ch)
         sense_pos.setEnabled(False)
+        sense_pos.setStyleSheet("QSpinBox:disabled { color: #888; }")
         self.gauge_table.setCellWidget(row, 4, sense_pos)
         
         sense_neg = QSpinBox()
         sense_neg.setRange(1001, 1040)
-        sense_neg.setValue(next_ch + 3)
+        sense_neg.setValue(bank2_ch)
         sense_neg.setEnabled(False)
+        sense_neg.setStyleSheet("QSpinBox:disabled { color: #888; }")
         self.gauge_table.setCellWidget(row, 5, sense_neg)
+        
+        # Force channels (update sense channels when changed)
+        force_pos = QSpinBox()
+        force_pos.setRange(1001, 1040)
+        force_pos.setValue(bank1_ch)
+        force_pos.valueChanged.connect(lambda val, r=row: self.gauge_table.cellWidget(r, 4).setValue(val))
+        self.gauge_table.setCellWidget(row, 2, force_pos)
+        
+        force_neg = QSpinBox()
+        force_neg.setRange(1001, 1040)
+        force_neg.setValue(bank2_ch)
+        force_neg.valueChanged.connect(lambda val, r=row: self.gauge_table.cellWidget(r, 5).setValue(val))
+        self.gauge_table.setCellWidget(row, 3, force_neg)
         
         # Delete button
         btn_delete = QPushButton("Delete")
@@ -238,13 +241,14 @@ class SettingsDialog(QDialog):
             
             wire_mode = wire_combo.currentText()
             
+            # For external instruments, sense channels always equal force channels
             case = {
                 "name": name_item.text(),
                 "wire_mode": wire_mode,
                 "force_channel_pos": force_pos.value(),
                 "force_channel_neg": force_neg.value(),
-                "sense_channel_pos": sense_pos.value() if wire_mode == "4-wire" else None,
-                "sense_channel_neg": sense_neg.value() if wire_mode == "4-wire" else None
+                "sense_channel_pos": force_pos.value() if wire_mode == "4-wire" else None,
+                "sense_channel_neg": force_neg.value() if wire_mode == "4-wire" else None
             }
             cases.append(case)
         
