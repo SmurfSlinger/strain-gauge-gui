@@ -37,8 +37,9 @@ class MultiplexPanel(QGroupBox):
         case_row.addWidget(QLabel("Case:"))
         self.cmb_case = QComboBox()
         for case in measurement_cases:
-            # Show name and channel pair in dropdown (Bank1/Bank2)
-            display_text = f"{case.name} [{case.force_channel_pos}/{case.force_channel_neg}]"
+            # Show name, wire mode, and channel pair in dropdown
+            mode_label = "4W" if case.is_4_wire() else "2W"
+            display_text = f"{case.name} [{mode_label}] {case.force_channel_pos}/{case.force_channel_neg}"
             self.cmb_case.addItem(display_text)
         self.cmb_case.currentIndexChanged.connect(self._on_case_changed)
         case_row.addWidget(self.cmb_case, 1)
