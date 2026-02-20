@@ -69,6 +69,8 @@ class ExperimentController:
     def begin_internal_dmm_mode(self, channel: int) -> None:
         """Internal DMM mode: Use 3706A's built-in DMM for 4-wire resistance."""
         self._channel = int(channel)
+        # Configure DMM and close channel ONCE at start
+        self.switch.setup_internal_dmm(channel)
         self._mode = "internal_dmm"
         self._armed = True
     
@@ -77,8 +79,8 @@ class ExperimentController:
             raise RuntimeError("ExperimentController not armed. Call begin_constant_current/voltage/internal_dmm_mode() first.")
 
         if self._mode == "internal_dmm":
-            # Internal DMM: measure resistance directly
-            r = self.switch.measure_resistance_internal_dmm(self._channel)
+            # Internal DMM: measure resistance directly (channel already configured)
+            r = self.switch.measure_resistance_internal_dmm()
             # DMM doesn't provide separate I/V, so we report the resistance
             return ResistanceResult(current_amps=0.0, measured_voltage=0.0, resistance_ohms=r, measurement_mode=self._mode)
         elif self._mode == "current_driven":

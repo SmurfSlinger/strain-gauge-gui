@@ -259,15 +259,13 @@ class Switch3700(BaseInstrument):
     
     # ---- Internal DMM 4-wire resistance measurements ----
     
-    def measure_resistance_internal_dmm(self, channel: int) -> float:
+    def setup_internal_dmm(self, channel: int) -> None:
         """
-        Use the 3706A's internal DMM to measure 4-wire resistance on a single channel.
+        Configure the 3706A's internal DMM for 4-wire resistance on a channel.
+        Call this ONCE at the start of acquisition.
         
         Args:
             channel: Channel number to measure (e.g., 1001)
-            
-        Returns:
-            Resistance in ohms
         """
         ch = int(channel)
         self._require_valid(ch)
@@ -279,20 +277,20 @@ class Switch3700(BaseInstrument):
         # Configure DMM for 4-wire ohms measurement
         self._tsp_write('dmm.setconfig("slot1","fourwireohms")')
         
-        # Create scan list with single channel
-        self._tsp_write(f'scan.create("{ch}")')
-        
-        # Create buffer for readings
-        self._tsp_write("mybuf = dmm.makebuffer(10)")
-        
-        # Set scan count to 1 (single measurement)
-        self._tsp_write('scan.scancount = 1')
-        
-        # Execute scan
-        self._tsp_write('scan.execute(mybuf)')
+        # Close the channel for measurement (leave it closed)
+        self._tsp_write(f'channel.close("{ch}")')
         self._waitcomplete()
         
-        # Read the result from buffer
-        result = self._tsp_query_value('mybuf.readings[1]')
+        self.closed_channels.add(ch)
+    
+    def measure_resistance_internal_dmm(self) -> float:
+        """
+        Take a single resistance measurement using the configured DMM.
+        Must call setup_internal_dmm() first.
         
+        Returns:
+            Resistance in ohms
+        """
+        # Just measure with the already-configured DMM and closed channel
+        result = self._tsp_query_value('dmm.measure()')
         return float(result)
