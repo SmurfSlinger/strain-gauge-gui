@@ -270,6 +270,9 @@ class Switch3700(BaseInstrument):
         ch = int(channel)
         self._require_valid(ch)
         
+        # Clear errors
+        self._tsp_write('errorqueue.clear()')
+        
         # Open all channels first
         self._tsp_write('channel.open("allslots")')
         self._waitcomplete()
@@ -277,7 +280,7 @@ class Switch3700(BaseInstrument):
         # Configure DMM for 4-wire ohms measurement
         self._tsp_write('dmm.setconfig("slot1","fourwireohms")')
         
-        # Close the channel for measurement (leave it closed)
+        # Close the channel manually (don't use scan - just close and leave closed)
         self._tsp_write(f'channel.close("{ch}")')
         self._waitcomplete()
         
@@ -291,6 +294,6 @@ class Switch3700(BaseInstrument):
         Returns:
             Resistance in ohms
         """
-        # Just measure with the already-configured DMM and closed channel
+        # Just measure - channel is already closed and DMM is configured
         result = self._tsp_query_value('dmm.measure()')
         return float(result)
