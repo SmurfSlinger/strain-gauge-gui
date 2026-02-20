@@ -25,11 +25,6 @@ class ExperimentController:
     def begin_constant_current_mode(self, ch_pos: int, ch_neg: int, current_amps: float, 
                                     sense_ch_pos: int | None = None, sense_ch_neg: int | None = None) -> None:
         """Current-driven mode: 6221 sources current, 6487 measures voltage."""
-        # CRITICAL: Ensure 6487 is in VOLTAGE measurement mode
-        self.voltmeter.write("SENS:FUNC 'VOLT'")
-        self.voltmeter.write("SENS:VOLT:RANG:AUTO ON")
-        self.voltmeter.write("*CLS")
-        
         # Configure routing ONCE at start
         self.switch.open_all()
         self.switch.close_channel(int(ch_pos))
