@@ -40,12 +40,10 @@ class Source6487(BaseInstrument):
             # Configure for voltage measurements (default mode)
             self.write("SOUR:VOLT:STAT OFF")  # Turn OFF voltage source
             self.write("SOUR:VOLT:RANG 50")  # Set voltage source range
-            self.write("SENS:FUNC 'VOLT'")  # Set to voltage measurement mode
-            self.write("SENS:VOLT:RANG:AUTO ON")  # Auto-range for voltage
+            self.write('FUNC "VOLT"')  # Set to voltage measurement mode
+            self.write("VOLT:RANG:AUTO ON")  # Auto-range for voltage
             self.write("FORM:ELEM READ")  # Format: reading only
             self.write("SYST:ZCH OFF")  # Disable zero check
-            self.write("ARM:SOUR IMM")  # Immediate arming
-            self.write("ARM:COUN 1")  # Single reading per trigger
             self.write("*CLS")  # Clear errors
             time.sleep(0.3)
             
@@ -88,14 +86,14 @@ class Source6487(BaseInstrument):
         """Enable/disable voltage source output."""
         if enabled:
             # When enabling voltage source, switch to current measurement mode
-            self.write("SENS:FUNC 'CURR'")  # Measure current
-            self.write("SENS:CURR:RANG:AUTO ON")  # Auto-range for current
+            self.write('FUNC "CURR"')  # Measure current
+            self.write("CURR:RANG:AUTO ON")  # Auto-range for current
             self.write("SOUR:VOLT:STAT ON")  # Enable voltage source
         else:
             # When disabling, switch back to voltage measurement mode
             self.write("SOUR:VOLT:STAT OFF")  # Disable voltage source
-            self.write("SENS:FUNC 'VOLT'")  # Measure voltage
-            self.write("SENS:VOLT:RANG:AUTO ON")  # Auto-range for voltage
+            self.write('FUNC "VOLT"')  # Measure voltage
+            self.write("VOLT:RANG:AUTO ON")  # Auto-range for voltage
         
         self.write("*CLS")
         self.output_enabled = enabled
