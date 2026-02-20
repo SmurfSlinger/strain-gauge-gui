@@ -569,6 +569,12 @@ class MainWindow(QMainWindow):
             self._controller.stop_outputs()
             self._thread.wait(2000)
             self._thread = None
+        
+        # Open all channels to reset hardware state
+        try:
+            self._controller.safe_idle()
+        except Exception as e:
+            print(f"Error resetting hardware: {e}")
 
         self._stop_csv()
         self._recording = False
@@ -698,5 +704,13 @@ class MainWindow(QMainWindow):
             self._csv_writer = None
 
     def closeEvent(self, event) -> None:
+        # Stop acquisition and reset hardware
         self._on_stop()
+        
+        # Ensure all channels are open before closing
+        try:
+            self._controller.safe_idle()
+        except Exception:
+            pass
+        
         super().closeEvent(event)
