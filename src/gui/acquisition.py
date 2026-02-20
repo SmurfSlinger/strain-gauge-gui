@@ -69,7 +69,12 @@ class AcquisitionThread(QThread):
         self.status.emit("Running")
 
         try:
-            if self._measurement_mode == "current_driven":
+            if self._measurement_mode == "internal_dmm":
+                # Internal DMM mode: only need one channel
+                self._controller.begin_internal_dmm_mode(
+                    channel=self._force_ch_pos,
+                )
+            elif self._measurement_mode == "current_driven":
                 self._controller.begin_constant_current_mode(
                     ch_pos=self._force_ch_pos,
                     ch_neg=self._force_ch_neg,

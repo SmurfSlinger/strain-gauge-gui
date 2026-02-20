@@ -191,26 +191,30 @@ class MainWindow(QMainWindow):
         exp = QGroupBox("Experiment Settings")
         el = QGridLayout(exp)
 
-        el.addWidget(QLabel("Force Ch +"), 0, 0)
+        el.addWidget(QLabel("Channel"), 0, 0)
         self.spin_ch_pos = QSpinBox()
         self.spin_ch_pos.setRange(1, 9999)
         self.spin_ch_pos.setValue(self._cfg.default_experiment.force_channel_pos)
+        self.spin_ch_pos.setToolTip("For Internal DMM: single channel (e.g., 1001). For external instruments: force channel +")
         el.addWidget(self.spin_ch_pos, 0, 1)
 
-        el.addWidget(QLabel("Force Ch -"), 0, 2)
+        self.lbl_ch_neg = QLabel("(unused for DMM)")
+        el.addWidget(self.lbl_ch_neg, 0, 2)
         self.spin_ch_neg = QSpinBox()
         self.spin_ch_neg.setRange(1, 9999)
         self.spin_ch_neg.setValue(self._cfg.default_experiment.force_channel_neg)
+        self.spin_ch_neg.setEnabled(False)
+        self.spin_ch_neg.setToolTip("Only used for external instrument modes")
         el.addWidget(self.spin_ch_neg, 0, 3)
 
         # Measurement mode selector
         el.addWidget(QLabel("Mode"), 1, 0)
         self.cmb_measurement_mode = QComboBox()
-        self.cmb_measurement_mode.addItems(["Current-Driven (I→V)", "Voltage-Driven (V→I)"])
+        self.cmb_measurement_mode.addItems(["Internal DMM (4-wire Ω)", "Current-Driven (I→V)", "Voltage-Driven (V→I)"])
         self.cmb_measurement_mode.currentIndexChanged.connect(self._on_measurement_mode_changed)
         el.addWidget(self.cmb_measurement_mode, 1, 1)
         
-        # Current label and spinbox (shown by default in current-driven mode)
+        # Current label and spinbox (hidden by default since Internal DMM is default)
         self.lbl_current_set = QLabel("Current (A)")
         el.addWidget(self.lbl_current_set, 2, 0)
         self.spin_current = QDoubleSpinBox()
@@ -218,8 +222,10 @@ class MainWindow(QMainWindow):
         self.spin_current.setRange(-1e3, 1e3)
         self.spin_current.setValue(self._cfg.default_experiment.current_amps)
         el.addWidget(self.spin_current, 2, 1)
+        self.lbl_current_set.hide()
+        self.spin_current.hide()
         
-        # Voltage label and spinbox (hidden by default, shown in voltage-driven mode)
+        # Voltage label and spinbox (hidden by default)
         self.lbl_voltage_set = QLabel("Voltage (V)")
         el.addWidget(self.lbl_voltage_set, 2, 0)
         self.spin_voltage = QDoubleSpinBox()
@@ -301,19 +307,34 @@ class MainWindow(QMainWindow):
                 self.spin_ch_neg.setValue(case.force_channel_neg)
     
     def _on_measurement_mode_changed(self, index):
-        """Handle switching between current-driven and voltage-driven modes."""
-        if index == 0:  # Current-Driven
+        """Handle switching between measurement modes."""
+        if index == 0:  # Internal DMM
+            # Hide both current and voltage spinboxes (not needed for internal DMM)
+            self.lbl_current_set.hide()
+            self.spin_current.hide()
+            self.lbl_voltage_set.hide()
+            self.spin_voltage.hide()
+            # Disable second channel (not needed for DMM)
+            self.spin_ch_neg.setEnabled(False)
+            self.lbl_ch_neg.setText("(unused for DMM)")
+        elif index == 1:  # Current-Driven
             # Show current spinbox, hide voltage spinbox
             self.lbl_current_set.show()
             self.spin_current.show()
             self.lbl_voltage_set.hide()
             self.spin_voltage.hide()
+            # Enable second channel for external mode
+            self.spin_ch_neg.setEnabled(True)
+            self.lbl_ch_neg.setText("Force Ch -")
         else:  # Voltage-Driven
             # Show voltage spinbox, hide current spinbox
             self.lbl_current_set.hide()
             self.spin_current.hide()
             self.lbl_voltage_set.show()
             self.spin_voltage.show()
+            # Enable second channel for external mode
+            self.spin_ch_neg.setEnabled(True)
+            self.lbl_ch_neg.setText("Force Ch -")
 
     def _on_open_settings(self):
         """Open the settings dialog."""
@@ -384,6 +405,18 @@ class MainWindow(QMainWindow):
 
         try:
             idn_switch = self._switch.connect()
+            
+            # For Internal DMM mode, only switch is needed
+            mode_index = self.cmb_measurement_mode.currentIndex()
+            if mode_index == 0:  # Internal DMM
+                self._connected = True
+                msg = f"Connected (Internal DMM mode):\n{idn_switch}"
+                self.lbl_conn_status.setText("Connected (DMM)")
+                self.statusBar().showMessage("Switch connected")
+                QMessageBox.information(self, "Connection Successful", msg)
+                return
+            
+            # For external instrument modes, connect all three
             idn_current = self._current_source.connect()
             idn_meter = self._voltmeter.connect()
 
@@ -503,7 +536,12 @@ class MainWindow(QMainWindow):
         
         # Determine measurement mode
         mode_index = self.cmb_measurement_mode.currentIndex()
-        measurement_mode = "current_driven" if mode_index == 0 else "voltage_driven"
+        if mode_index == 0:
+            measurement_mode = "internal_dmm"
+        elif mode_index == 1:
+            measurement_mode = "current_driven"
+        else:
+            measurement_mode = "voltage_driven"
         
         # ONLY NOW start the acquisition thread
         self._thread = AcquisitionThread(
