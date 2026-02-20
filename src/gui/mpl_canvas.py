@@ -18,27 +18,25 @@ class MplPlotCanvas(FigureCanvas):
         self.ax.set_ylabel("Value")
         self.ax.grid(True, alpha=0.3)
         
+        # Disable scientific notation offset (use normal notation)
+        self.ax.ticklabel_format(style='plain', axis='y', useOffset=False)
+        
         self._x: List[float] = []
         self._y: List[float] = []
         (self._line,) = self.ax.plot([], [], linewidth=1.5)
 
         self.fig = fig
         
-        # Y-axis limits (will be set after first few points)
-        self._y_limits_set = False
-        self._y_min = None
-        self._y_max = None
-        
         # Scrolling window settings
         self._window_size = 30.0  # Show last 30 seconds
+        self._update_ylim_every = 50  # Update y-limits every N points
+        self._point_count = 0
 
     def clear(self) -> None:
         self._x.clear()
         self._y.clear()
         self._line.set_data([], [])
-        self._y_limits_set = False
-        self._y_min = None
-        self._y_max = None
+        self._point_count = 0
         self.ax.relim()
         self.ax.autoscale_view()
         self.draw_idle()
@@ -47,29 +45,31 @@ class MplPlotCanvas(FigureCanvas):
         self._x.append(float(x))
         self._y.append(float(y))
         self._line.set_data(self._x, self._y)
+        self._point_count += 1
         
-        # After collecting ~10 points, set Y limits based on data range
-        if not self._y_limits_set and len(self._y) >= 10:
-            y_min = min(self._y)
-            y_max = max(self._y)
+        # Update Y limits periodically to adapt to data
+        if len(self._y) >= 10 and (self._point_count % self._update_ylim_every == 0 or len(self._y) == 10):
+            # Use recent data for y-limits (last 100 points or all if less)
+            recent_y = self._y[-100:] if len(self._y) > 100 else self._y
+            y_min = min(recent_y)
+            y_max = max(recent_y)
             y_range = y_max - y_min
             
             # Add 10% padding on top and bottom
             if y_range > 0:
                 padding = y_range * 0.1
-                self._y_min = y_min - padding
-                self._y_max = y_max + padding
+                new_y_min = y_min - padding
+                new_y_max = y_max + padding
             else:
-                # If all values are the same, use ±10% of the value
+                # If all values are the same, use ±1% of the value
                 if abs(y_min) > 1e-15:
-                    self._y_min = y_min * 0.9
-                    self._y_max = y_max * 1.1
+                    new_y_min = y_min * 0.99
+                    new_y_max = y_max * 1.01
                 else:
-                    self._y_min = -1e-10
-                    self._y_max = 1e-10
+                    new_y_min = -0.1
+                    new_y_max = 0.1
             
-            self.ax.set_ylim(self._y_min, self._y_max)
-            self._y_limits_set = True
+            self.ax.set_ylim(new_y_min, new_y_max)
         
         # Set X-axis to show a scrolling window
         if len(self._x) > 0:

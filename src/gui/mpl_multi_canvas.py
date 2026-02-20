@@ -26,6 +26,9 @@ class MplMultiGaugeCanvas(FigureCanvas):
         self.ax.set_xlabel("Time (s)")
         self.ax.set_ylabel("Value")
         self.ax.grid(True, alpha=0.3)
+        
+        # Disable scientific notation offset (use normal notation)
+        self.ax.ticklabel_format(style='plain', axis='y', useOffset=False)
 
         self.fig = fig
         
@@ -34,16 +37,12 @@ class MplMultiGaugeCanvas(FigureCanvas):
         # Value = {'x': deque, 'y': deque, 'line': matplotlib line object}
         self._data: Dict[str, dict] = {}
         
-        # Y-axis limits (will be set after first few points)
-        self._y_limits_set = False
-        self._y_min = None
-        self._y_max = None
-        
         # Scrolling window settings
         self._window_size = 30.0  # Show last 30 seconds
         
-        # Track total points for determining when to set y-limits
+        # Track total points for determining when to update y-limits
         self._total_points = 0
+        self._update_ylim_every = 50  # Update y-limits every N points
         
         # Performance: limit max points displayed per series
         self._max_points_displayed = 500  # Only plot last 500 points per gauge
@@ -60,9 +59,9 @@ class MplMultiGaugeCanvas(FigureCanvas):
         self.ax.set_ylabel("Value")
         self.ax.grid(True, alpha=0.3)
         
-        self._y_limits_set = False
-        self._y_min = None
-        self._y_max = None
+        # Disable scientific notation offset
+        self.ax.ticklabel_format(style='plain', axis='y', useOffset=False)
+        
         self._total_points = 0
         self._pending_updates.clear()
         
@@ -126,12 +125,14 @@ class MplMultiGaugeCanvas(FigureCanvas):
         
         self._pending_updates.clear()
         
-        # After collecting ~30 total points across all gauges, set Y limits
-        if not self._y_limits_set and self._total_points >= 30:
-            # Find global min/max across all series
+        # Update Y limits periodically to adapt to data
+        if self._total_points >= 30 and (self._total_points % self._update_ylim_every == 0 or self._total_points == 30):
+            # Find global min/max across recent points from all series
             all_y = []
             for series in self._data.values():
-                all_y.extend(series['y'])
+                # Use last 100 points from each series
+                recent_y = series['y'][-100:] if len(series['y']) > 100 else series['y']
+                all_y.extend(recent_y)
             
             if all_y:
                 y_min = min(all_y)
@@ -141,19 +142,18 @@ class MplMultiGaugeCanvas(FigureCanvas):
                 # Add 10% padding on top and bottom
                 if y_range > 0:
                     padding = y_range * 0.1
-                    self._y_min = y_min - padding
-                    self._y_max = y_max + padding
+                    new_y_min = y_min - padding
+                    new_y_max = y_max + padding
                 else:
-                    # If all values are the same, use ±10% of the value
+                    # If all values are the same, use ±1% of the value
                     if abs(y_min) > 1e-15:
-                        self._y_min = y_min * 0.9
-                        self._y_max = y_max * 1.1
+                        new_y_min = y_min * 0.99
+                        new_y_max = y_max * 1.01
                     else:
-                        self._y_min = -1e-10
-                        self._y_max = 1e-10
+                        new_y_min = -0.1
+                        new_y_max = 0.1
                 
-                self.ax.set_ylim(self._y_min, self._y_max)
-                self._y_limits_set = True
+                self.ax.set_ylim(new_y_min, new_y_max)
         
         # Set X-axis to show a scrolling window (use the latest time from any series)
         max_time = max((series['x'][-1] for series in self._data.values() if series['x']), default=0)
