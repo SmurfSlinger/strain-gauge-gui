@@ -127,28 +127,27 @@ class MplMultiGaugeCanvas(FigureCanvas):
         
         # Update Y limits periodically to adapt to data
         if self._total_points >= 30 and (self._total_points % self._update_ylim_every == 0 or self._total_points == 30):
-            # Find global min/max across recent points from all series
+            # Find global min/max across ALL points from all series
             all_y = []
             for series in self._data.values():
-                # Use last 100 points from each series
-                recent_y = series['y'][-100:] if len(series['y']) > 100 else series['y']
-                all_y.extend(recent_y)
+                # Use ALL data to see full experiment range
+                all_y.extend(series['y'])
             
             if all_y:
                 y_min = min(all_y)
                 y_max = max(all_y)
                 y_range = y_max - y_min
                 
-                # Add 10% padding on top and bottom
+                # Add 50% padding on top and bottom for wider view
                 if y_range > 0:
-                    padding = y_range * 0.1
+                    padding = y_range * 0.5
                     new_y_min = y_min - padding
                     new_y_max = y_max + padding
                 else:
-                    # If all values are the same, use ±1% of the value
+                    # If all values are the same, use ±2% of the value
                     if abs(y_min) > 1e-15:
-                        new_y_min = y_min * 0.99
-                        new_y_max = y_max * 1.01
+                        new_y_min = y_min * 0.98
+                        new_y_max = y_max * 1.02
                     else:
                         new_y_min = -0.1
                         new_y_max = 0.1

@@ -49,22 +49,21 @@ class MplPlotCanvas(FigureCanvas):
         
         # Update Y limits periodically to adapt to data
         if len(self._y) >= 10 and (self._point_count % self._update_ylim_every == 0 or len(self._y) == 10):
-            # Use recent data for y-limits (last 100 points or all if less)
-            recent_y = self._y[-100:] if len(self._y) > 100 else self._y
-            y_min = min(recent_y)
-            y_max = max(recent_y)
+            # Use ALL data for y-limits to see full experiment range
+            y_min = min(self._y)
+            y_max = max(self._y)
             y_range = y_max - y_min
             
-            # Add 10% padding on top and bottom
+            # Add 50% padding on top and bottom for wider view
             if y_range > 0:
-                padding = y_range * 0.1
+                padding = y_range * 0.5
                 new_y_min = y_min - padding
                 new_y_max = y_max + padding
             else:
-                # If all values are the same, use ±1% of the value
+                # If all values are the same, use ±2% of the value
                 if abs(y_min) > 1e-15:
-                    new_y_min = y_min * 0.99
-                    new_y_max = y_max * 1.01
+                    new_y_min = y_min * 0.98
+                    new_y_max = y_max * 1.02
                 else:
                     new_y_min = -0.1
                     new_y_max = 0.1
