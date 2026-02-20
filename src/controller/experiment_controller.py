@@ -87,8 +87,9 @@ class ExperimentController:
             # Current-driven: measure voltage, current is known
             v = self.voltmeter.measure_voltage()
             i = self._current_amps
-            # DEBUG: Print values to console
-            print(f"DEBUG: Voltage={v:.6e} V, Current={i:.6e} A")
+            # DEBUG: Write to file
+            with open('debug_measurement.txt', 'a') as f:
+                f.write(f"Voltage={v:.6e} V, Current={i:.6e} A\n")
         else:  # voltage_driven
             # Voltage-driven: measure current, voltage is known
             i = self.voltmeter.measure_current()
@@ -96,8 +97,9 @@ class ExperimentController:
         
         if self._mode != "internal_dmm":
             r = (v / i) if i != 0 else 0.0
-            # DEBUG: Print calculation
-            print(f"DEBUG: Resistance = {v:.6e} / {i:.6e} = {r:.6e} Ω")
+            # DEBUG: Write calculation to file
+            with open('debug_measurement.txt', 'a') as f:
+                f.write(f"Resistance = {v:.6e} / {i:.6e} = {r:.6e} Ω\n")
             return ResistanceResult(current_amps=i, measured_voltage=v, resistance_ohms=r, measurement_mode=self._mode)
 
     def stop_outputs(self) -> None:
