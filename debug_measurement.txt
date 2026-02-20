@@ -1,0 +1,57 @@
+Voltage=4.934594e-04 V, Current=1.000000e-03 A
+Voltage=4.927135e-04 V, Current=1.000000e-03 A
+Resistance = 4.927135e-04 / 1.000000e-03 = 4.927135e-01 Ohms
+Voltage=4.926985e-04 V, Current=1.000000e-03 A
+Resistance = 4.926985e-04 / 1.000000e-03 = 4.926985e-01 Ohms
+Voltage=4.930365e-04 V, Current=1.000000e-03 A
+Resistance = 4.930365e-04 / 1.000000e-03 = 4.930365e-01 Ohms
+Voltage=4.923997e-04 V, Current=1.000000e-03 A
+Resistance = 4.923997e-04 / 1.000000e-03 = 4.923997e-01 Ohms
+Voltage=4.925785e-04 V, Current=1.000000e-03 A
+Resistance = 4.925785e-04 / 1.000000e-03 = 4.925785e-01 Ohms
+Voltage=4.919947e-04 V, Current=1.000000e-03 A
+Resistance = 4.919947e-04 / 1.000000e-03 = 4.919947e-01 Ohms
+Voltage=4.923990e-04 V, Current=1.000000e-03 A
+Resistance = 4.923990e-04 / 1.000000e-03 = 4.923990e-01 Ohms
+Voltage=4.924516e-04 V, Current=1.000000e-03 A
+Resistance = 4.924516e-04 / 1.000000e-03 = 4.924516e-01 Ohms
+Voltage=4.930857e-04 V, Current=1.000000e-03 A
+Resistance = 4.930857e-04 / 1.000000e-03 = 4.930857e-01 Ohms
+Voltage=4.928221e-04 V, Current=1.000000e-03 A
+Resistance = 4.928221e-04 / 1.000000e-03 = 4.928221e-01 Ohms
+Voltage=4.930291e-04 V, Current=1.000000e-03 A
+Resistance = 4.930291e-04 / 1.000000e-03 = 4.930291e-01 Ohms
+Voltage=4.919636e-04 V, Current=1.000000e-03 A
+Resistance = 4.919636e-04 / 1.000000e-03 = 4.919636e-01 Ohms
+Voltage=4.919292e-04 V, Current=1.000000e-03 A
+Resistance = 4.919292e-04 / 1.000000e-03 = 4.919292e-01 Ohms
+Voltage=4.928256e-04 V, Current=1.000000e-03 A
+Resistance = 4.928256e-04 / 1.000000e-03 = 4.928256e-01 Ohms
+Voltage=4.923273e-04 V, Current=1.000000e-03 A
+Resistance = 4.923273e-04 / 1.000000e-03 = 4.923273e-01 Ohms
+Voltage=4.925841e-04 V, Current=1.000000e-03 A
+Resistance = 4.925841e-04 / 1.000000e-03 = 4.925841e-01 Ohms
+Voltage=4.924238e-04 V, Current=1.000000e-03 A
+Resistance = 4.924238e-04 / 1.000000e-03 = 4.924238e-01 Ohms
+Voltage=4.919589e-04 V, Current=1.000000e-03 A
+Resistance = 4.919589e-04 / 1.000000e-03 = 4.919589e-01 Ohms
+Voltage=4.920947e-04 V, Current=1.000000e-03 A
+Resistance = 4.920947e-04 / 1.000000e-03 = 4.920947e-01 Ohms
+Voltage=4.926301e-04 V, Current=1.000000e-03 A
+Resistance = 4.926301e-04 / 1.000000e-03 = 4.926301e-01 Ohms
+Voltage=4.922522e-04 V, Current=1.000000e-03 A
+Resistance = 4.922522e-04 / 1.000000e-03 = 4.922522e-01 Ohms
+Voltage=4.918054e-04 V, Current=1.000000e-03 A
+Resistance = 4.918054e-04 / 1.000000e-03 = 4.918054e-01 Ohms
+Voltage=4.930424e-04 V, Current=1.000000e-03 A
+Resistance = 4.930424e-04 / 1.000000e-03 = 4.930424e-01 Ohms
+Voltage=4.919019e-04 V, Current=1.000000e-03 A
+Resistance = 4.919019e-04 / 1.000000e-03 = 4.919019e-01 Ohms
+Voltage=4.929061e-04 V, Current=1.000000e-03 A
+Resistance = 4.929061e-04 / 1.000000e-03 = 4.929061e-01 Ohms
+Voltage=4.919549e-04 V, Current=1.000000e-03 A
+Resistance = 4.919549e-04 / 1.000000e-03 = 4.919549e-01 Ohms
+Voltage=4.924419e-04 V, Current=1.000000e-03 A
+Resistance = 4.924419e-04 / 1.000000e-03 = 4.924419e-01 Ohms
+Voltage=4.916435e-04 V, Current=1.000000e-03 A
+Resistance = 4.916435e-04 / 1.000000e-03 = 4.916435e-01 Ohms
