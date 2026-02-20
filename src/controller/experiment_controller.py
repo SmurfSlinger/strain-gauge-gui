@@ -99,7 +99,7 @@ class ExperimentController:
             r = (v / i) if i != 0 else 0.0
             # DEBUG: Write calculation to file
             with open('debug_measurement.txt', 'a') as f:
-                f.write(f"Resistance = {v:.6e} / {i:.6e} = {r:.6e} Ω\n")
+                f.write(f"Resistance = {v:.6e} / {i:.6e} = {r:.6e} Ohms\n")
             return ResistanceResult(current_amps=i, measured_voltage=v, resistance_ohms=r, measurement_mode=self._mode)
 
     def stop_outputs(self) -> None:
