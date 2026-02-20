@@ -25,16 +25,27 @@ class ExperimentController:
     def begin_constant_current_mode(self, ch_pos: int, ch_neg: int, current_amps: float, 
                                     sense_ch_pos: int | None = None, sense_ch_neg: int | None = None) -> None:
         """Current-driven mode: 6221 sources current, 6487 measures voltage."""
+        # CRITICAL: Ensure 6487 is in VOLTAGE measurement mode
+        self.voltmeter.write("SENS:FUNC 'VOLT'")
+        self.voltmeter.write("SENS:VOLT:RANG:AUTO ON")
+        self.voltmeter.write("*CLS")
+        
         # Configure routing ONCE at start
         self.switch.open_all()
         self.switch.close_channel(int(ch_pos))
-        self.switch.close_channel(int(ch_neg))
         
         # For 4-wire measurements, also close sense channels
         if sense_ch_pos is not None:
             self.switch.close_channel(int(sense_ch_pos))
-        if sense_ch_neg is not None:
-            self.switch.close_channel(int(sense_ch_neg))
+            # DEBUG: Log which channels are closed
+            with open('debug_measurement.txt', 'a') as f:
+                f.write(f"\n=== NEW MEASUREMENT SESSION ===\n")
+                f.write(f"Closed channels: Force {ch_pos} | Sense {sense_ch_pos}\n\n")
+        else:
+            # DEBUG: Log for 2-wire mode
+            with open('debug_measurement.txt', 'a') as f:
+                f.write(f"\n=== NEW MEASUREMENT SESSION ===\n")
+                f.write(f"Closed channels: Force {ch_pos}\n\n")
 
         # Configure source ONCE at start
         self.current_source.set_current(float(current_amps))
@@ -50,13 +61,10 @@ class ExperimentController:
         # Configure routing ONCE at start
         self.switch.open_all()
         self.switch.close_channel(int(ch_pos))
-        self.switch.close_channel(int(ch_neg))
         
         # For 4-wire measurements, also close sense channels
         if sense_ch_pos is not None:
             self.switch.close_channel(int(sense_ch_pos))
-        if sense_ch_neg is not None:
-            self.switch.close_channel(int(sense_ch_neg))
         
         # Configure 6487 to source voltage
         self.voltmeter.set_voltage(float(voltage_volts))
