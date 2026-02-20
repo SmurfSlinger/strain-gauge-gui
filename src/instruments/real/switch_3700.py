@@ -210,6 +210,15 @@ class Switch3700(BaseInstrument):
             # open_channel will also discard from closed_channels
             self.open_channel(ch)
         self.closed_channels.clear()
+    
+    def open_all_slots(self):
+        """
+        Open all channels across all slots using TSP command.
+        More efficient for internal DMM operations.
+        """
+        self._tsp_write('channel.open("allslots")')
+        self._waitcomplete()
+        self.closed_channels.clear()
 
     # ---- named routes (preferred) ----
 
@@ -247,3 +256,43 @@ class Switch3700(BaseInstrument):
         for r in state.close_routes:
             if r in self.routes:
                 self.connect_route(r)
+    
+    # ---- Internal DMM 4-wire resistance measurements ----
+    
+    def measure_resistance_internal_dmm(self, channel: int) -> float:
+        """
+        Use the 3706A's internal DMM to measure 4-wire resistance on a single channel.
+        
+        Args:
+            channel: Channel number to measure (e.g., 1001)
+            
+        Returns:
+            Resistance in ohms
+        """
+        ch = int(channel)
+        self._require_valid(ch)
+        
+        # Open all channels first
+        self._tsp_write('channel.open("allslots")')
+        self._waitcomplete()
+        
+        # Configure DMM for 4-wire ohms measurement
+        self._tsp_write('dmm.setconfig("slot1","fourwireohms")')
+        
+        # Create scan list with single channel
+        self._tsp_write(f'scan.create("{ch}")')
+        
+        # Create buffer for readings
+        self._tsp_write("mybuf = dmm.makebuffer(10)")
+        
+        # Set scan count to 1 (single measurement)
+        self._tsp_write('scan.scancount = 1')
+        
+        # Execute scan
+        self._tsp_write('scan.execute(mybuf)')
+        self._waitcomplete()
+        
+        # Read the result from buffer
+        result = self._tsp_query_value('mybuf.readings[1]')
+        
+        return float(result)

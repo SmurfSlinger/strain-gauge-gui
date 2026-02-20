@@ -19,7 +19,8 @@ class ExperimentController:
         self._current_amps = 0.0
         self._voltage_volts = 0.0
         self._armed = False
-        self._mode = "current_driven"  # "current_driven" or "voltage_driven"
+        self._mode = "current_driven"  # "current_driven", "voltage_driven", or "internal_dmm"
+        self._channel = None  # For internal DMM mode
 
     def begin_constant_current_mode(self, ch_pos: int, ch_neg: int, current_amps: float, 
                                     sense_ch_pos: int | None = None, sense_ch_neg: int | None = None) -> None:
@@ -65,11 +66,22 @@ class ExperimentController:
         self._mode = "voltage_driven"
         self._armed = True
 
+    def begin_internal_dmm_mode(self, channel: int) -> None:
+        """Internal DMM mode: Use 3706A's built-in DMM for 4-wire resistance."""
+        self._channel = int(channel)
+        self._mode = "internal_dmm"
+        self._armed = True
+    
     def take_sample(self) -> ResistanceResult:
         if not self._armed:
-            raise RuntimeError("ExperimentController not armed. Call begin_constant_current/voltage_mode() first.")
+            raise RuntimeError("ExperimentController not armed. Call begin_constant_current/voltage/internal_dmm_mode() first.")
 
-        if self._mode == "current_driven":
+        if self._mode == "internal_dmm":
+            # Internal DMM: measure resistance directly
+            r = self.switch.measure_resistance_internal_dmm(self._channel)
+            # DMM doesn't provide separate I/V, so we report the resistance
+            return ResistanceResult(current_amps=0.0, measured_voltage=0.0, resistance_ohms=r, measurement_mode=self._mode)
+        elif self._mode == "current_driven":
             # Current-driven: measure voltage, current is known
             v = self.voltmeter.measure_voltage()
             i = self._current_amps
@@ -78,14 +90,17 @@ class ExperimentController:
             i = self.voltmeter.measure_current()
             v = self._voltage_volts
         
-        r = (v / i) if i != 0 else 0.0
-
-        return ResistanceResult(current_amps=i, measured_voltage=v, resistance_ohms=r, measurement_mode=self._mode)
+        if self._mode != "internal_dmm":
+            r = (v / i) if i != 0 else 0.0
+            return ResistanceResult(current_amps=i, measured_voltage=v, resistance_ohms=r, measurement_mode=self._mode)
 
     def stop_outputs(self) -> None:
         # Fast "stop measuring" safety: turn source off
         try:
-            if self._mode == "current_driven":
+            if self._mode == "internal_dmm":
+                # No external outputs to disable for internal DMM
+                pass
+            elif self._mode == "current_driven":
                 self.current_source.set_output(False)
             else:  # voltage_driven
                 self.voltmeter.set_voltage_output(False)
@@ -95,15 +110,17 @@ class ExperimentController:
     def safe_idle(self) -> None:
         # Full "reset hardware" safety: open relays + output off
         try:
-            self.current_source.set_output(False)
+            if self.current_source:
+                self.current_source.set_output(False)
         except Exception:
             pass
         try:
-            self.voltmeter.set_voltage_output(False)
+            if self.voltmeter:
+                self.voltmeter.set_voltage_output(False)
         except Exception:
             pass
         try:
-            self.switch.open_all()
+            self.switch.open_all_slots()
         except Exception:
             pass
         self._armed = False
