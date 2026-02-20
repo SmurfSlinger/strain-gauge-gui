@@ -42,7 +42,7 @@ class MplMultiGaugeCanvas(FigureCanvas):
         
         # Track total points for determining when to update y-limits
         self._total_points = 0
-        self._update_ylim_every = 50  # Update y-limits every N points
+        self._update_ylim_every = 10  # Update y-limits every N points
         
         # Performance: limit max points displayed per series
         self._max_points_displayed = 500  # Only plot last 500 points per gauge

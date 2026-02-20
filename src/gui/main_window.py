@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
         
         # Plot update throttling (reduce visual choppiness)
         self._last_plot_update = 0.0
-        self._plot_update_interval = 0.5  # Update plot every 0.5 seconds
+        self._plot_update_interval = 0.1  # Update plot every 0.1 seconds (10 Hz)
 
         root = QWidget()
         self.setCentralWidget(root)

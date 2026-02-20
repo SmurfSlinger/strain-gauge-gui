@@ -29,7 +29,7 @@ class MplPlotCanvas(FigureCanvas):
         
         # Scrolling window settings
         self._window_size = 30.0  # Show last 30 seconds
-        self._update_ylim_every = 50  # Update y-limits every N points
+        self._update_ylim_every = 10  # Update y-limits every N points
         self._point_count = 0
 
     def clear(self) -> None:
