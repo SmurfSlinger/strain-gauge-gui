@@ -280,8 +280,7 @@ class Switch3700(BaseInstrument):
         # Configure DMM for 4-wire ohms measurement
         self._tsp_write('dmm.setconfig("slot1","fourwireohms")')
         
-        # Open DMM first, then close to specific channel (routes DMM to that channel)
-        self._tsp_write('dmm.open()')
+        # Route DMM to specific channel
         self._tsp_write(f'dmm.close("{ch}")')
         self._waitcomplete()
         
