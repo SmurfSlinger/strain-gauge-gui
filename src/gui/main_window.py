@@ -101,21 +101,31 @@ class MainWindow(QMainWindow):
     # UI builders
     # -------------------------
     def _build_left_panel(self, left: QVBoxLayout) -> None:
-        g = QGroupBox()
+        # Mode indicator
+        mode_group = QGroupBox("Measurement Mode")
+        mode_layout = QVBoxLayout(mode_group)
+        self.lbl_mode_info = QLabel("Internal DMM: Sources Current, Measures Voltage")
+        self.lbl_mode_info.setWordWrap(True)
+        self.lbl_mode_info.setStyleSheet("QLabel { color: #2c5aa0; font-size: 9pt; }")
+        mode_layout.addWidget(self.lbl_mode_info)
+        left.addWidget(mode_group)
+        
+        # Indicators
+        g = QGroupBox("Measurements")
         gl = QGridLayout(g)
 
         r = 0
         gl.addWidget(QLabel("Time (s)"), r, 0)
         self.lbl_time = QLabel("0")
         gl.addWidget(self.lbl_time, r, 1); r += 1
+        
+        gl.addWidget(QLabel("Applied (Constant)"), r, 0)
+        self.lbl_applied = QLabel("0 A")
+        gl.addWidget(self.lbl_applied, r, 1); r += 1
 
-        gl.addWidget(QLabel("Current (A)"), r, 0)
-        self.lbl_current = QLabel("0")
-        gl.addWidget(self.lbl_current, r, 1); r += 1
-
-        gl.addWidget(QLabel("Voltage (V)"), r, 0)
-        self.lbl_voltage = QLabel("0")
-        gl.addWidget(self.lbl_voltage, r, 1); r += 1
+        gl.addWidget(QLabel("Measured"), r, 0)
+        self.lbl_measured = QLabel("0 V")
+        gl.addWidget(self.lbl_measured, r, 1); r += 1
 
         gl.addWidget(QLabel("Resistance (Ω)"), r, 0)
         self.lbl_resistance = QLabel("0")
@@ -261,7 +271,7 @@ class MainWindow(QMainWindow):
         center.addWidget(exp)
 
     def _build_right_panel(self, right: QVBoxLayout) -> None:
-        g = QGroupBox("Numeric")
+        g = QGroupBox("Load Cell")
         gl = QGridLayout(g)
 
         gl.addWidget(QLabel("Load (lbs)"), 0, 0)
@@ -271,14 +281,6 @@ class MainWindow(QMainWindow):
         gl.addWidget(QLabel("Extension (in)"), 1, 0)
         self.lbl_extension = QLabel("0")
         gl.addWidget(self.lbl_extension, 1, 1)
-
-        gl.addWidget(QLabel("Strain"), 2, 0)
-        self.lbl_strain1 = QLabel("0")
-        gl.addWidget(self.lbl_strain1, 2, 1)
-
-        gl.addWidget(QLabel("Strain 2"), 3, 0)
-        self.lbl_strain2 = QLabel("0")
-        gl.addWidget(self.lbl_strain2, 3, 1)
 
         right.addWidget(g)
         right.addStretch(1)
@@ -326,6 +328,8 @@ class MainWindow(QMainWindow):
             self.lbl_force.setText("Channel")
             self.lbl_sense.setText("(unused for DMM)")
             self.spin_ch_neg.setEnabled(False)
+            # Update mode indicator
+            self.lbl_mode_info.setText("Internal DMM: Sources Current, Measures Voltage")
         elif index == 1:  # Current-Driven
             # Show current spinbox, hide voltage spinbox
             self.lbl_current_set.show()
@@ -336,6 +340,8 @@ class MainWindow(QMainWindow):
             self.lbl_force.setText("Force Ch (Bank 1)")
             self.lbl_sense.setText("Sense Ch (Bank 2)")
             self.spin_ch_neg.setEnabled(True)
+            # Update mode indicator
+            self.lbl_mode_info.setText("External: Sources Current, Measures Voltage")
         else:  # Voltage-Driven
             # Show voltage spinbox, hide current spinbox
             self.lbl_current_set.hide()
@@ -346,6 +352,8 @@ class MainWindow(QMainWindow):
             self.lbl_force.setText("Force Ch (Bank 1)")
             self.lbl_sense.setText("Sense Ch (Bank 2)")
             self.spin_ch_neg.setEnabled(True)
+            # Update mode indicator
+            self.lbl_mode_info.setText("External: Sources Voltage, Measures Current")
 
     def _on_open_settings(self):
         """Open the settings dialog."""
@@ -639,14 +647,23 @@ class MainWindow(QMainWindow):
     def _on_sample(self, sample: Sample) -> None:
         # Update indicators
         self.lbl_time.setText(f"{sample.t_seconds:.3f}")
-        self.lbl_current.setText(f"{sample.current_amps:.6g}")
-        self.lbl_voltage.setText(f"{sample.voltage_v:.6g}")
+        
+        # Update applied/measured based on mode
+        mode_index = self.cmb_measurement_mode.currentIndex()
+        if mode_index == 0:  # Internal DMM (sources current)
+            self.lbl_applied.setText(f"{sample.current_amps:.6g} A")
+            self.lbl_measured.setText(f"{sample.voltage_v:.6g} V")
+        elif mode_index == 1:  # Current-driven (sources current)
+            self.lbl_applied.setText(f"{sample.current_amps:.6g} A")
+            self.lbl_measured.setText(f"{sample.voltage_v:.6g} V")
+        else:  # Voltage-driven (sources voltage)
+            self.lbl_applied.setText(f"{sample.voltage_v:.6g} V")
+            self.lbl_measured.setText(f"{sample.current_amps:.6g} A")
+        
         self.lbl_resistance.setText(f"{sample.resistance_ohms:.6g}")
 
         self.lbl_load.setText(f"{sample.load_lbs:.6g}")
         self.lbl_extension.setText(f"{sample.extension_in:.6g}")
-        self.lbl_strain1.setText(f"{sample.strain_1:.6g}")
-        self.lbl_strain2.setText(f"{sample.strain_2:.6g}")
 
         # Plot based on selector
         idx = self.cmb_plot.currentIndex()
@@ -692,50 +709,85 @@ class MainWindow(QMainWindow):
         self._csv_fp = open(path, "w", newline="", encoding="utf-8")
         self._csv_writer = csv.writer(self._csv_fp)
         
-        # Write metadata header (write as plain text, not CSV rows)
+        # Initialize storage for latest values per case
+        self._latest_sample_values = {}
+        
+        # Write metadata header
         self._csv_fp.write("# Strain Gauge Data Acquisition\n")
         self._csv_fp.write(f"# Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        self._csv_fp.write(f"# Current: {self.spin_current.value()} A\n")
-        self._csv_fp.write(f"# Channels: +{self.spin_ch_pos.value()}, -{self.spin_ch_neg.value()}\n")
         self._csv_fp.write(f"# Sample Interval: {self.spin_interval.value()} ms\n")
-        self._csv_fp.write("\n")  # Blank line
         
-        # Column headers with units
-        self._csv_writer.writerow([
-            "Time (s)",
-            "Case",
-            "Current (A)", 
-            "Voltage (V)",
-            "Resistance (Ohm)",
-            "Load (lbs)",
-            "Extension (in)",
-            "Strain 1",
-            "Strain 2"
-        ])
+        # Get mode info
+        mode_index = self.cmb_measurement_mode.currentIndex()
+        if mode_index == 0:
+            mode_str = "Internal DMM (sources current, measures voltage)"
+        elif mode_index == 1:
+            mode_str = f"Current-Driven (constant {self.spin_current.value()} A)"
+        else:
+            mode_str = f"Voltage-Driven (constant {self.spin_voltage.value()} V)"
+        self._csv_fp.write(f"# Mode: {mode_str}\n")
+        self._csv_fp.write("\n")
+        
+        # Build column headers based on multiplexing
+        headers = ["Time (s)"]
+        
+        if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
+            # Multiplexing: Samples as columns
+            for case in self._cfg.measurement_cases:
+                headers.extend([
+                    f"{case.name} Current (A)",
+                    f"{case.name} Voltage (V)",
+                    f"{case.name} Resistance (Ohm)"
+                ])
+        else:
+            # Single gauge: simple columns
+            headers.extend(["Current (A)", "Voltage (V)", "Resistance (Ohm)"])
+        
+        # Add load cell columns
+        headers.extend(["Load (lbs)", "Extension (in)"])
+        
+        self._csv_writer.writerow(headers)
         self._csv_fp.flush()
 
     def _write_csv(self, s: Sample) -> None:
         if not self._csv_writer:
             return
         
-        # Get current case name if multiplexing
-        case_name = ""
-        if self.multiplex_panel:
-            case = self.multiplex_panel.get_current_case()
-            case_name = case.name if case else ""
+        row = [f"{s.t_seconds:.6f}"]
         
-        # Format numbers to be more readable (6 significant figures)
-        self._csv_writer.writerow([
-            f"{s.t_seconds:.6f}",
-            case_name,
-            f"{s.current_amps:.6e}",
-            f"{s.voltage_v:.6e}",
-            f"{s.resistance_ohms:.6e}",
+        if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
+            # Multiplexing: Samples as columns
+            # Get current case
+            case = self.multiplex_panel.get_current_case()
+            current_case_name = case.name if case else ""
+            
+            # For each configured case, add its values (zeros if not active)
+            for config_case in self._cfg.measurement_cases:
+                if config_case.name == current_case_name:
+                    # Active case - write actual values
+                    row.extend([
+                        f"{s.current_amps:.6e}",
+                        f"{s.voltage_v:.6e}",
+                        f"{s.resistance_ohms:.6e}"
+                    ])
+                else:
+                    # Inactive case - write zeros
+                    row.extend(["0", "0", "0"])
+        else:
+            # Single gauge - simple columns
+            row.extend([
+                f"{s.current_amps:.6e}",
+                f"{s.voltage_v:.6e}",
+                f"{s.resistance_ohms:.6e}"
+            ])
+        
+        # Add load cell data
+        row.extend([
             f"{s.load_lbs:.6f}",
-            f"{s.extension_in:.6f}",
-            f"{s.strain_1:.6e}",
-            f"{s.strain_2:.6e}"
+            f"{s.extension_in:.6f}"
         ])
+        
+        self._csv_writer.writerow(row)
         if self._csv_fp:
             self._csv_fp.flush()
 
