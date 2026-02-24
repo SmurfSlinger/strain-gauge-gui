@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         self._recording = False
         self._csv_fp = None
         self._csv_writer = None
+        self._switching_in_progress = False  # Flag to skip measurements during channel switch
         
         # Plot update throttling (reduce visual choppiness)
         self._last_plot_update = 0.0
@@ -323,22 +324,22 @@ class MainWindow(QMainWindow):
             return
         
         try:
+            # Set flag to skip measurements during switch
+            self._switching_in_progress = True
+            
             # Get the new case (multiplex_panel already updated its state)
             new_case = self.multiplex_panel.get_current_case()
             if not new_case:
+                self._switching_in_progress = False
                 return
             
-            # Find the OLD case based on current spinbox values
+            # Find the OLD case based on current spinbox values (BEFORE we update them)
             old_pos = self.spin_ch_pos.value()
             old_case = None
             for case in self._cfg.measurement_cases:
                 if case.force_channel_pos == old_pos:
                     old_case = case
                     break
-            
-            # Update spinboxes to new case
-            self.spin_ch_pos.setValue(new_case.force_channel_pos)
-            self.spin_ch_neg.setValue(new_case.force_channel_neg)
             
             # Reconfigure hardware: ONLY open old case channels, not all channels!
             # 1. Open old case's channels
@@ -350,13 +351,19 @@ class MainWindow(QMainWindow):
             for ch in new_case.get_all_channels():
                 self._switch.close_channel(ch)
             
-            # 3. Wait for relays to settle before next measurement
+            # 3. Update spinboxes AFTER hardware switch
+            self.spin_ch_pos.setValue(new_case.force_channel_pos)
+            self.spin_ch_neg.setValue(new_case.force_channel_neg)
+            
+            # 4. Wait for relays to settle, then re-enable measurements
             import time
-            time.sleep(0.05)  # 50ms delay for relay settling
+            time.sleep(0.1)  # 100ms delay for relay settling
+            self._switching_in_progress = False
             
             self.statusBar().showMessage(f"Switched to {new_case.name}")
             
         except Exception as e:
+            self._switching_in_progress = False
             QMessageBox.critical(self, "Switch Error", f"Error switching cases: {e}")
             self._on_stop()
     
@@ -449,51 +456,50 @@ class MainWindow(QMainWindow):
             return
         
         try:
-            # Get old channels to open
-            old_pos = self.spin_ch_pos.value()
-            old_neg = self.spin_ch_neg.value()
+            # Set flag to skip measurements during switch
+            self._switching_in_progress = True
+            
+            # Get old case BEFORE advancing
+            old_case_idx = self.multiplex_panel._current_case_idx
+            old_case = self._cfg.measurement_cases[old_case_idx]
             
             # Advance to next case
             self.multiplex_panel.auto_advance_case()
             
             # Get new case
-            case = self.multiplex_panel.get_current_case()
-            if not case:
+            new_case = self.multiplex_panel.get_current_case()
+            if not new_case:
+                self._switching_in_progress = False
                 return
-            
-            new_pos = case.force_channel_pos
-            new_neg = case.force_channel_neg
-            
-            # Update spinboxes
-            self.spin_ch_pos.setValue(new_pos)
-            self.spin_ch_neg.setValue(new_neg)
             
             # Reconfigure hardware:
             # IMPORTANT: Don't call stop_outputs() - keep current source running!
             # Just switch the relay channels while current is still flowing
             
-            # Get old case to properly close all channels
-            old_case_idx = (self.multiplex_panel._current_case_idx - 1) % len(self._cfg.measurement_cases)
-            old_case = self._cfg.measurement_cases[old_case_idx]
-            
-            # 1. Open ALL old channels (force + sense if 4-wire)
+            # 1. Open ALL old case's channels (force + sense if 4-wire)
             for ch in old_case.get_all_channels():
                 self._switch.open_channel(ch)
             
-            # 2. Close ALL new channels (force + sense if 4-wire)
-            for ch in case.get_all_channels():
+            # 2. Close ALL new case's channels (force + sense if 4-wire)
+            for ch in new_case.get_all_channels():
                 self._switch.close_channel(ch)
             
-            # 3. Wait for relays to settle before next measurement
+            # 3. Update spinboxes AFTER hardware switch
+            self.spin_ch_pos.setValue(new_case.force_channel_pos)
+            self.spin_ch_neg.setValue(new_case.force_channel_neg)
+            
+            # 4. Wait for relays to settle, then re-enable measurements
             import time
-            time.sleep(0.05)  # 50ms delay for relay settling
+            time.sleep(0.1)  # 100ms delay for relay settling
+            self._switching_in_progress = False
             
             # Current source stays on - controller remains armed
             # Next take_sample() will measure the new gauge
             
-            self.statusBar().showMessage(f"Switched to {case.name}")
+            self.statusBar().showMessage(f"Switched to {new_case.name}")
             
         except Exception as e:
+            self._switching_in_progress = False
             QMessageBox.critical(self, "Switch Error", f"Error switching cases: {e}")
             self._on_stop()  # Stop everything if switching fails
                 
@@ -693,6 +699,10 @@ class MainWindow(QMainWindow):
         QMessageBox.critical(self, "Acquisition Error", msg)
 
     def _on_sample(self, sample: Sample) -> None:
+        # Skip this sample if we're in the middle of switching channels
+        if self._switching_in_progress:
+            return
+        
         # Update indicators
         self.lbl_time.setText(f"{sample.t_seconds:.3f}")
         
