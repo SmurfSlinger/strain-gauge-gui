@@ -102,7 +102,8 @@ class MultiplexPanel(QGroupBox):
             btn = QPushButton("SWITCH TO")
             btn.setMaximumWidth(90)
             btn.setStyleSheet("QPushButton { font-size: 8pt; padding: 3px; }")
-            btn.clicked.connect(lambda checked=False, idx=i: self._on_switch_to_case(idx))
+            # Use a proper closure to capture the index
+            btn.clicked.connect(self._make_switch_handler(i))
             btn.setToolTip(f"Switch to {case.name} immediately")
             self._case_buttons.append(btn)
             row.addWidget(btn)
@@ -139,6 +140,10 @@ class MultiplexPanel(QGroupBox):
         layout.addLayout(readings_row)
         
         layout.addStretch(1)
+    
+    def _make_switch_handler(self, case_idx):
+        """Create a handler that properly captures the case index."""
+        return lambda: self._on_switch_to_case(case_idx)
     
     def _on_switch_to_case(self, idx):
         """User clicked SWITCH TO button for a specific case."""
