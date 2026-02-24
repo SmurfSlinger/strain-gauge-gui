@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QSpinBox,
+    QScrollArea,
+    QWidget,
 )
 from PySide6.QtCore import Signal
 
@@ -21,7 +23,7 @@ class MultiplexPanel(QGroupBox):
     case_changed = Signal(int)  # Emits index of selected case
     multiplex_toggled = Signal(bool)  # Emits True when multiplexing enabled
     auto_cycle_toggled = Signal(bool)  # Emits True when auto-cycle enabled
-    switch_requested = Signal()  # Emits when user clicks "Switch to Next Case" button
+    switch_requested = Signal()  # Emits when user requests a case switch
     
     def __init__(self, measurement_cases, parent=None):
         super().__init__("Multiplexing", parent)
@@ -32,18 +34,16 @@ class MultiplexPanel(QGroupBox):
         
         layout = QVBoxLayout(self)
         
-        # Case selector dropdown
-        case_row = QHBoxLayout()
-        case_row.addWidget(QLabel("Case:"))
-        self.cmb_case = QComboBox()
-        for case in measurement_cases:
-            # Show name, wire mode, and channel pair in dropdown
-            mode_label = "4W" if case.is_4_wire() else "2W"
-            display_text = f"{case.name} [{mode_label}] {case.force_channel_pos}/{case.force_channel_neg}"
-            self.cmb_case.addItem(display_text)
-        self.cmb_case.currentIndexChanged.connect(self._on_case_changed)
-        case_row.addWidget(self.cmb_case, 1)
-        layout.addLayout(case_row)
+        # Status indicators at top
+        status_group = QGroupBox("Current Status")
+        status_layout = QVBoxLayout(status_group)
+        
+        current_row = QHBoxLayout()
+        current_row.addWidget(QLabel("Active Case:"))
+        self.lbl_current_case = QLabel(measurement_cases[0].name if measurement_cases else "None")
+        self.lbl_current_case.setStyleSheet("QLabel { font-weight: bold; color: #2c5aa0; }")
+        current_row.addWidget(self.lbl_current_case, 1)
+        status_layout.addLayout(current_row)
         
         # Show current channels (Bank 1 / Bank 2)
         channels_label = QLabel()
@@ -53,7 +53,69 @@ class MultiplexPanel(QGroupBox):
             first_case = measurement_cases[0]
             channels_label.setText(f"Bank 1: {first_case.force_channel_pos} | Bank 2: {first_case.force_channel_neg}")
         self.lbl_channels = channels_label
-        layout.addWidget(self.lbl_channels)
+        status_layout.addWidget(self.lbl_channels)
+        
+        count_row = QHBoxLayout()
+        count_row.addWidget(QLabel("Readings:"))
+        self.lbl_reading_count = QLabel("0")
+        count_row.addWidget(self.lbl_reading_count, 1)
+        status_layout.addLayout(count_row)
+        
+        layout.addWidget(status_group)
+        
+        # Available cases list with checkboxes and SWITCH TO buttons
+        cases_group = QGroupBox("Available Cases")
+        cases_layout = QVBoxLayout(cases_group)
+        
+        # Scrollable area for case list
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setMaximumHeight(200)
+        scroll_widget = QWidget()
+        scroll_layout = QVBoxLayout(scroll_widget)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(2)
+        
+        # Create checkbox + button for each case
+        self._case_checkboxes = []
+        self._case_buttons = []
+        
+        for i, case in enumerate(measurement_cases):
+            row = QHBoxLayout()
+            row.setSpacing(5)
+            
+            # Checkbox (enabled by default)
+            chk = QCheckBox()
+            chk.setChecked(True)  # All enabled by default
+            chk.setToolTip("Enable/disable this case in auto-cycle")
+            self._case_checkboxes.append(chk)
+            row.addWidget(chk)
+            
+            # Case info label
+            mode_label = "4W" if case.is_4_wire() else "2W"
+            info_text = f"{case.name} [{mode_label}] ({case.force_channel_pos}/{case.force_channel_neg})"
+            lbl = QLabel(info_text)
+            lbl.setStyleSheet("QLabel { font-size: 9pt; }")
+            row.addWidget(lbl, 1)
+            
+            # SWITCH TO button
+            btn = QPushButton("SWITCH TO")
+            btn.setMaximumWidth(90)
+            btn.setStyleSheet("QPushButton { font-size: 8pt; padding: 3px; }")
+            btn.clicked.connect(lambda checked=False, idx=i: self._on_switch_to_case(idx))
+            btn.setToolTip(f"Switch to {case.name} immediately")
+            self._case_buttons.append(btn)
+            row.addWidget(btn)
+            
+            scroll_layout.addLayout(row)
+        
+        scroll_layout.addStretch(1)
+        scroll.setWidget(scroll_widget)
+        cases_layout.addWidget(scroll)
+        layout.addWidget(cases_group)
+        
+        # Update button states for initial case
+        self._update_case_button_states()
         
         # Enable multiplexing checkbox
         self.chk_enable = QCheckBox("Enable Multiplexing")
@@ -61,7 +123,7 @@ class MultiplexPanel(QGroupBox):
         layout.addWidget(self.chk_enable)
         
         # Auto cycle checkbox
-        self.chk_auto = QCheckBox("Auto Cycle Through Cases")
+        self.chk_auto = QCheckBox("Auto Cycle (Enabled Cases Only)")
         self.chk_auto.toggled.connect(self._on_auto_toggled)
         self.chk_auto.setEnabled(False)  # Only enabled when multiplexing is on
         layout.addWidget(self.chk_auto)
@@ -76,63 +138,54 @@ class MultiplexPanel(QGroupBox):
         readings_row.addWidget(self.spin_readings, 1)
         layout.addLayout(readings_row)
         
-        # Manual switch button (for manual mode)
-        self.btn_next_case = QPushButton("Switch to Next Case")
-        self.btn_next_case.clicked.connect(self._on_next_case)
-        self.btn_next_case.setEnabled(False)
-        layout.addWidget(self.btn_next_case)
-        
-        # Status indicators
-        status_group = QGroupBox("Status")
-        status_layout = QVBoxLayout(status_group)
-        
-        current_row = QHBoxLayout()
-        current_row.addWidget(QLabel("Current Case:"))
-        self.lbl_current_case = QLabel(measurement_cases[0].name if measurement_cases else "None")
-        current_row.addWidget(self.lbl_current_case, 1)
-        status_layout.addLayout(current_row)
-        
-        count_row = QHBoxLayout()
-        count_row.addWidget(QLabel("Readings:"))
-        self.lbl_reading_count = QLabel("0")
-        count_row.addWidget(self.lbl_reading_count, 1)
-        status_layout.addLayout(count_row)
-        
-        layout.addWidget(status_group)
         layout.addStretch(1)
     
-    def _on_case_changed(self, idx):
-        """User manually selected a different case."""
+    def _on_switch_to_case(self, idx):
+        """User clicked SWITCH TO button for a specific case."""
         if idx < 0 or idx >= len(self._cases):
             return
+        if idx == self._current_case_idx:
+            return  # Already on this case
+        
+        # Update current case
         self._current_case_idx = idx
         self._readings_count = 0
         case = self._cases[idx]
         self.lbl_current_case.setText(case.name)
         self.lbl_channels.setText(f"Bank 1: {case.force_channel_pos} | Bank 2: {case.force_channel_neg}")
         self.lbl_reading_count.setText("0")
+        
+        # Update button states (disable current case button)
+        self._update_case_button_states()
+        
+        # Emit signals to trigger hardware switch
         self.case_changed.emit(idx)
+        self.switch_requested.emit()
+    
+    def _update_case_button_states(self):
+        """Update SWITCH TO button states based on current case."""
+        for i, btn in enumerate(self._case_buttons):
+            # Disable button for currently active case
+            btn.setEnabled(i != self._current_case_idx)
+            if i == self._current_case_idx:
+                btn.setStyleSheet("QPushButton { font-size: 8pt; padding: 3px; background-color: #d0d0d0; }")
+            else:
+                btn.setStyleSheet("QPushButton { font-size: 8pt; padding: 3px; }")
     
     def _on_multiplex_toggled(self, checked):
         """Enable/disable multiplexing."""
         self.chk_auto.setEnabled(checked)
-        self.btn_next_case.setEnabled(checked and not self.chk_auto.isChecked())
         self.spin_readings.setEnabled(checked and self.chk_auto.isChecked())
-        self.cmb_case.setEnabled(not checked)  # Manual case selection only when multiplex is off
         self.multiplex_toggled.emit(checked)
     
     def _on_auto_toggled(self, checked):
         """Enable/disable auto-cycling."""
-        self.btn_next_case.setEnabled(not checked and self.chk_enable.isChecked())
         self.spin_readings.setEnabled(checked)
         self.auto_cycle_toggled.emit(checked)
     
-    def _on_next_case(self):
-        """Manually advance to the next case."""
-        if len(self._cases) <= 1:
-            return
-        # Emit signal to request the switch (main window will handle hardware)
-        self.switch_requested.emit()
+    def _get_enabled_case_indices(self):
+        """Returns list of indices for enabled (checked) cases."""
+        return [i for i, chk in enumerate(self._case_checkboxes) if chk.isChecked()]
     
     def increment_reading_count(self):
         """Called by main window each time a sample is taken."""
@@ -161,12 +214,22 @@ class MultiplexPanel(QGroupBox):
         return self._readings_count >= self.spin_readings.value()
     
     def auto_advance_case(self):
-        """Automatically advance to the next case (used in auto mode)."""
-        if len(self._cases) <= 1:
-            return
-        next_idx = (self._current_case_idx + 1) % len(self._cases)
+        """Automatically advance to the next enabled case (used in auto mode)."""
+        enabled_indices = self._get_enabled_case_indices()
+        
+        if len(enabled_indices) <= 1:
+            return  # No point advancing if 0 or 1 cases enabled
+        
+        # Find next enabled case after current
+        current_pos = enabled_indices.index(self._current_case_idx) if self._current_case_idx in enabled_indices else -1
+        next_pos = (current_pos + 1) % len(enabled_indices)
+        next_idx = enabled_indices[next_pos]
+        
         self._current_case_idx = next_idx
         case = self._cases[next_idx]
         self.lbl_current_case.setText(case.name)
         self.lbl_channels.setText(f"Bank 1: {case.force_channel_pos} | Bank 2: {case.force_channel_neg}")
         self.reset_reading_count()
+        
+        # Update button states
+        self._update_case_button_states()
