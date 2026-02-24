@@ -127,24 +127,43 @@ class MplMultiGaugeCanvas(FigureCanvas):
         
         # Update Y limits periodically to adapt to data
         if self._total_points >= 30 and (self._total_points % self._update_ylim_every == 0 or self._total_points == 30):
-            # Find global min/max across ALL points from all series
-            all_y = []
-            for series in self._data.values():
-                # Use ALL data to see full experiment range
-                all_y.extend(series['y'])
+            # For multi-gauge, we want to show DETAIL in fluctuations, not just fit all data
+            # Strategy: Calculate range based on the VARIANCE of each series
             
-            if all_y:
-                y_min = min(all_y)
-                y_max = max(all_y)
-                y_range = y_max - y_min
+            # Collect recent data from each series (last 50 points for responsiveness)
+            recent_window = 50
+            all_recent_y = []
+            series_ranges = []
+            
+            for series in self._data.values():
+                if len(series['y']) > 0:
+                    recent = series['y'][-recent_window:] if len(series['y']) > recent_window else series['y']
+                    all_recent_y.extend(recent)
+                    # Track the range (variation) within this series
+                    if len(recent) > 1:
+                        series_range = max(recent) - min(recent)
+                        series_ranges.append(series_range)
+            
+            if all_recent_y:
+                # Use global min/max of recent data
+                y_min = min(all_recent_y)
+                y_max = max(all_recent_y)
                 
-                # Add 50% padding on top and bottom for wider view
-                if y_range > 0:
-                    padding = y_range * 0.5
+                # Find the largest variation among all series
+                max_series_range = max(series_ranges) if series_ranges else 0
+                
+                # Set padding based on the larger of:
+                # 1. 100% of the max series variation (to show detail)
+                # 2. 5% of the overall range (minimum padding)
+                overall_range = y_max - y_min
+                padding = max(max_series_range * 1.0, overall_range * 0.05)
+                
+                # Apply padding
+                if padding > 0:
                     new_y_min = y_min - padding
                     new_y_max = y_max + padding
                 else:
-                    # If all values are the same, use ±2% of the value
+                    # Fallback for completely flat data
                     if abs(y_min) > 1e-15:
                         new_y_min = y_min * 0.98
                         new_y_max = y_max * 1.02
