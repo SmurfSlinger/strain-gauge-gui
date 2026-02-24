@@ -137,7 +137,7 @@ class MainWindow(QMainWindow):
         if self._cfg.measurement_cases:
             self.multiplex_panel = MultiplexPanel(self._cfg.measurement_cases)
             self.multiplex_panel.case_changed.connect(self._on_multiplex_case_changed)
-            self.multiplex_panel.switch_requested.connect(self._switch_to_next_case)
+            self.multiplex_panel.switch_requested.connect(self._on_manual_case_switch)
             left.addWidget(self.multiplex_panel)
         else:
             self.multiplex_panel = None
@@ -315,6 +315,41 @@ class MainWindow(QMainWindow):
             if case:
                 self.spin_ch_pos.setValue(case.force_channel_pos)
                 self.spin_ch_neg.setValue(case.force_channel_neg)
+    
+    def _on_manual_case_switch(self):
+        """User clicked SWITCH TO button - switch hardware to the selected case."""
+        if not self.multiplex_panel or not self._thread or not self._thread.isRunning():
+            return
+        
+        try:
+            # Get the case that was just selected (multiplex_panel already updated its state)
+            case = self.multiplex_panel.get_current_case()
+            if not case:
+                return
+            
+            # Get old channels to open
+            old_pos = self.spin_ch_pos.value()
+            old_neg = self.spin_ch_neg.value()
+            
+            # Update spinboxes to new case
+            self.spin_ch_pos.setValue(case.force_channel_pos)
+            self.spin_ch_neg.setValue(case.force_channel_neg)
+            
+            # Reconfigure hardware
+            # 1. Open all old channels
+            for old_case in self._cfg.measurement_cases:
+                for ch in old_case.get_all_channels():
+                    self._switch.open_channel(ch)
+            
+            # 2. Close new channels
+            for ch in case.get_all_channels():
+                self._switch.close_channel(ch)
+            
+            self.statusBar().showMessage(f"Switched to {case.name}")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Switch Error", f"Error switching cases: {e}")
+            self._on_stop()
     
     def _on_measurement_mode_changed(self, index):
         """Handle switching between measurement modes."""

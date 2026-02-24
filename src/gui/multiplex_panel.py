@@ -70,11 +70,12 @@ class MultiplexPanel(QGroupBox):
         # Scrollable area for case list
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setMaximumHeight(200)
+        scroll.setMinimumHeight(250)
+        scroll.setMaximumHeight(300)
         scroll_widget = QWidget()
         scroll_layout = QVBoxLayout(scroll_widget)
-        scroll_layout.setContentsMargins(0, 0, 0, 0)
-        scroll_layout.setSpacing(2)
+        scroll_layout.setContentsMargins(5, 5, 5, 5)
+        scroll_layout.setSpacing(5)
         
         # Create checkbox + button for each case
         self._case_checkboxes = []
@@ -93,9 +94,9 @@ class MultiplexPanel(QGroupBox):
             
             # Case info label
             mode_label = "4W" if case.is_4_wire() else "2W"
-            info_text = f"{case.name} [{mode_label}] ({case.force_channel_pos}/{case.force_channel_neg})"
+            info_text = f"{case.name} ({case.force_channel_pos}/{case.force_channel_neg})"
             lbl = QLabel(info_text)
-            lbl.setStyleSheet("QLabel { font-size: 9pt; }")
+            lbl.setStyleSheet("QLabel { font-size: 8pt; }")
             row.addWidget(lbl, 1)
             
             # SWITCH TO button
