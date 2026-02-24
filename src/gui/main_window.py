@@ -45,6 +45,11 @@ class MainWindow(QMainWindow):
         # Create menu bar
         menubar = self.menuBar()
         
+        # File menu
+        file_menu = menubar.addMenu("&File")
+        save_graph_action = file_menu.addAction("Save &Graph...")
+        save_graph_action.triggered.connect(self._on_save_graph)
+        
         # Settings menu
         settings_menu = menubar.addMenu("&Settings")
         settings_action = settings_menu.addAction("&Preferences...")
@@ -352,6 +357,39 @@ class MainWindow(QMainWindow):
         """Show the help dialog."""
         dialog = HelpDialog(self)
         dialog.exec()
+    
+    def _on_save_graph(self):
+        """Save the current graph as an image file."""
+        # Determine default filename based on current CSV file
+        default_path = None
+        if self._csv_fp:
+            # CSV file is open - use its path with .png extension
+            csv_path = Path(self._csv_fp.name)
+            default_path = str(csv_path.with_suffix('.png'))
+        else:
+            # No CSV open - use working directory
+            workdir = self.txt_workdir.text().strip()
+            if workdir:
+                default_path = str(Path(workdir) / "graph.png")
+            else:
+                default_path = "graph.png"
+        
+        # Ask user for save location
+        save_path = QFileDialog.getSaveFileName(
+            self,
+            "Save Graph Image",
+            default_path,
+            "PNG Image (*.png);;PDF Document (*.pdf);;JPEG Image (*.jpg);;All Files (*.*)"
+        )[0]
+        
+        if save_path:
+            try:
+                # Save the current plot
+                self.plot.fig.savefig(save_path, dpi=300, bbox_inches='tight')
+                self.statusBar().showMessage(f"Graph saved to {save_path}")
+                QMessageBox.information(self, "Graph Saved", f"Graph saved successfully to:\n{save_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Save Error", f"Could not save graph:\n{e}")
     
     def _switch_to_next_case(self):
         """Switch to the next measurement case (for multiplexing)."""
