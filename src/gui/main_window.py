@@ -41,6 +41,7 @@ class MainWindow(QMainWindow):
         self._cfg = cfg
 
         self.setWindowTitle("DAQ / Resistance Acquisition")
+        self.resize(1400, 900)  # Set larger initial window size
 
         # Create menu bar
         menubar = self.menuBar()
@@ -322,30 +323,38 @@ class MainWindow(QMainWindow):
             return
         
         try:
-            # Get the case that was just selected (multiplex_panel already updated its state)
-            case = self.multiplex_panel.get_current_case()
-            if not case:
+            # Get the new case (multiplex_panel already updated its state)
+            new_case = self.multiplex_panel.get_current_case()
+            if not new_case:
                 return
             
-            # Get old channels to open
+            # Find the OLD case based on current spinbox values
             old_pos = self.spin_ch_pos.value()
-            old_neg = self.spin_ch_neg.value()
+            old_case = None
+            for case in self._cfg.measurement_cases:
+                if case.force_channel_pos == old_pos:
+                    old_case = case
+                    break
             
             # Update spinboxes to new case
-            self.spin_ch_pos.setValue(case.force_channel_pos)
-            self.spin_ch_neg.setValue(case.force_channel_neg)
+            self.spin_ch_pos.setValue(new_case.force_channel_pos)
+            self.spin_ch_neg.setValue(new_case.force_channel_neg)
             
-            # Reconfigure hardware
-            # 1. Open all old channels
-            for old_case in self._cfg.measurement_cases:
+            # Reconfigure hardware: ONLY open old case channels, not all channels!
+            # 1. Open old case's channels
+            if old_case:
                 for ch in old_case.get_all_channels():
                     self._switch.open_channel(ch)
             
-            # 2. Close new channels
-            for ch in case.get_all_channels():
+            # 2. Close new case's channels
+            for ch in new_case.get_all_channels():
                 self._switch.close_channel(ch)
             
-            self.statusBar().showMessage(f"Switched to {case.name}")
+            # 3. Wait for relays to settle before next measurement
+            import time
+            time.sleep(0.05)  # 50ms delay for relay settling
+            
+            self.statusBar().showMessage(f"Switched to {new_case.name}")
             
         except Exception as e:
             QMessageBox.critical(self, "Switch Error", f"Error switching cases: {e}")
@@ -474,6 +483,10 @@ class MainWindow(QMainWindow):
             # 2. Close ALL new channels (force + sense if 4-wire)
             for ch in case.get_all_channels():
                 self._switch.close_channel(ch)
+            
+            # 3. Wait for relays to settle before next measurement
+            import time
+            time.sleep(0.05)  # 50ms delay for relay settling
             
             # Current source stays on - controller remains armed
             # Next take_sample() will measure the new gauge
@@ -752,31 +765,37 @@ class MainWindow(QMainWindow):
         self._csv_fp.write(f"# Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         self._csv_fp.write(f"# Sample Interval: {self.spin_interval.value()} ms\n")
         
-        # Get mode info
+        # Get mode info and constant value
         mode_index = self.cmb_measurement_mode.currentIndex()
         if mode_index == 0:
-            mode_str = "Internal DMM (sources current, measures voltage)"
+            mode_str = "Internal DMM (4-wire resistance)"
+            self._csv_fp.write(f"# Constant Current: ~1 mA (DMM sourced)\n")
         elif mode_index == 1:
-            mode_str = f"Current-Driven (constant {self.spin_current.value()} A)"
+            mode_str = "Current-Driven"
+            self._csv_fp.write(f"# Constant Current: {self.spin_current.value()} A\n")
         else:
-            mode_str = f"Voltage-Driven (constant {self.spin_voltage.value()} V)"
+            mode_str = "Voltage-Driven"
+            self._csv_fp.write(f"# Constant Voltage: {self.spin_voltage.value()} V\n")
         self._csv_fp.write(f"# Mode: {mode_str}\n")
         self._csv_fp.write("\n")
         
-        # Build column headers based on multiplexing
+        # Build column headers - always use samples as columns format
         headers = ["Time (s)"]
         
-        if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
-            # Multiplexing: Samples as columns
-            for case in self._cfg.measurement_cases:
-                headers.extend([
-                    f"{case.name} Current (A)",
-                    f"{case.name} Voltage (V)",
-                    f"{case.name} Resistance (Ohm)"
-                ])
+        if self.multiplex_panel and self._cfg.measurement_cases:
+            # Get enabled cases only (checked checkboxes)
+            enabled_indices = self.multiplex_panel._get_enabled_case_indices()
+            
+            # Store which cases are enabled for CSV writing
+            self._csv_enabled_cases = [self._cfg.measurement_cases[i] for i in enabled_indices]
+            
+            # Create columns only for enabled samples - resistance only
+            for case in self._csv_enabled_cases:
+                headers.append(f"{case.name} Resistance (Ohm)")
         else:
-            # Single gauge: simple columns
-            headers.extend(["Current (A)", "Voltage (V)", "Resistance (Ohm)"])
+            # No multiplex panel: simple columns
+            self._csv_enabled_cases = None
+            headers.append("Resistance (Ohm)")
         
         # Add load cell columns
         headers.extend(["Load (lbs)", "Extension (in)"])
@@ -790,31 +809,23 @@ class MainWindow(QMainWindow):
         
         row = [f"{s.t_seconds:.6f}"]
         
-        if self.multiplex_panel and self.multiplex_panel.is_multiplexing_enabled():
-            # Multiplexing: Samples as columns
+        if self._csv_enabled_cases:
+            # Table format: samples as columns (only enabled ones)
             # Get current case
-            case = self.multiplex_panel.get_current_case()
+            case = self.multiplex_panel.get_current_case() if self.multiplex_panel else None
             current_case_name = case.name if case else ""
             
-            # For each configured case, add its values (zeros if not active)
-            for config_case in self._cfg.measurement_cases:
-                if config_case.name == current_case_name:
-                    # Active case - write actual values
-                    row.extend([
-                        f"{s.current_amps:.6e}",
-                        f"{s.voltage_v:.6e}",
-                        f"{s.resistance_ohms:.6e}"
-                    ])
+            # For each enabled case, add resistance (zero if not active)
+            for enabled_case in self._csv_enabled_cases:
+                if enabled_case.name == current_case_name:
+                    # Active case - write actual resistance
+                    row.append(f"{s.resistance_ohms:.6e}")
                 else:
-                    # Inactive case - write zeros
-                    row.extend(["0", "0", "0"])
+                    # Inactive case - write zero
+                    row.append("0")
         else:
-            # Single gauge - simple columns
-            row.extend([
-                f"{s.current_amps:.6e}",
-                f"{s.voltage_v:.6e}",
-                f"{s.resistance_ohms:.6e}"
-            ])
+            # Simple format - single sample
+            row.append(f"{s.resistance_ohms:.6e}")
         
         # Add load cell data
         row.extend([
